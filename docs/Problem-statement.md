@@ -1,27 +1,22 @@
-# SecondSelf — Your Personal AI Second Brain
+# Project: SecondSelf — Your Personal AI Second Brain
 
-## The Problem
+## The Big Problem
 
-Every notes app fails the same way: you capture hundreds of notes, bookmarks, PDFs, and ideas — and then you never find them again. Information goes in, but nothing comes back out. Notes sit in folders nobody re-reads. Bookmarks pile up unread. Knowledge doesn't compound.
+Every notes app fails the same way: you capture hundreds of notes, bookmarks, PDFs, and
+ideas — and then you never find them again. Information goes in, but nothing comes back out.
+Notes sit in folders nobody re-reads. Bookmarks pile up unread. Knowledge doesn't compound.
 
-## Goal
+**Goal:** Build an end-to-end system where you can capture *anything* (a note, a link, a file),
+have AI automatically classify and file it, auto-link it to related knowledge, render it as a
+live interactive graph you can explore, and — most importantly — *ask it any question in plain
+English and get an answer synthesized from your own accumulated knowledge*. Then deploy it to a
+public URL anyone can open.
 
-Build an end-to-end system where you can:
-
-- Capture anything (a note, a link, a file)
-- Have AI automatically classify and file it
-- Auto-link it to related knowledge
-- Render it as a live interactive graph you can explore
-- Ask it any question in plain English and get an answer synthesized from your own accumulated knowledge
-- Deploy it to a public URL anyone can open
-
-**Not a notes app. Not a chatbot. A brain that organizes itself and answers for you.**
+> Not a notes app. Not a chatbot. A brain that organizes itself and answers for you.
 
 ---
 
-## Final System (4-Week Build)
-
-What you're building end to end:
+## Final System (what you're building over 4 weeks)
 
 ```
 Capture any note/link/file
@@ -36,40 +31,38 @@ Ask it anything in plain English → answer pulled from YOUR notes
         ↓
 Deployed on a public URL anyone can open
 ```
+---
+
+# Week-by-Week Problem Statements
+
+Each week is a self-contained problem. Build it, test it on **real** data (your own notes —
+not test data), and each week's output becomes the next week's input.
 
 ---
 
-## Week-by-Week Problem Statements
+## Week 1 — The Archivist: "Capture Everything, Lose Nothing"
 
-Each week is a self-contained problem. Build it, test it on real data (your own notes — not test data), and each week's output becomes the next week's input.
+### Problem
+You have no single place to put things. Ideas, links, and notes scatter across apps, browser
+tabs, and your memory. Build the foundation: **one command that captures anything into one place.**
 
----
-
-### Week 1 — The Archivist: "Capture Everything, Lose Nothing"
-
-#### Problem
-
-You have no single place to put things. Ideas, links, and notes scatter across apps, browser tabs, and your memory. Build the foundation: one command that captures anything into one place.
-
-#### Build
-
+### Build
 1. Set up the project structure from scratch:
    - `raw/` — where every raw capture lands
    - `wiki/` — (used later) organized, linked notes
-2. Write a Python capture script that takes any note, link, or file and saves it into `raw/` with:
-   - a timestamp
-   - a unique ID
+2. Write a Python capture script that takes any note, link, or file and saves it into `raw/`
+   with:
+   - a **timestamp**
+   - a **unique ID**
    - the raw content
-3. Test it on 10+ real pieces of your own scattered information.
+3. Test it on **10+ real** pieces of your own scattered information.
 
-#### Deliverable: Ship the Capture Pipeline
+### Deliverable ("Ship the Capture Pipeline")
+- A working capture script — one command saves anything to `raw/` with timestamp + unique ID.
+- Your `raw/` folder populated with **10+ real captured items** (not test data).
+- 🏅 **Badge: The Archivist**
 
-- A working capture script — one command saves anything to `raw/` with timestamp + unique ID
-- Your `raw/` folder populated with 10+ real captured items (not test data)
-- 🏅 Badge: **The Archivist**
-
-#### Acceptance Criteria
-
+### Acceptance Criteria
 - [ ] `raw/` and `wiki/` folder structure exists
 - [ ] One command captures a note, a link, AND a file
 - [ ] Every capture has a timestamp + unique ID
@@ -77,37 +70,32 @@ You have no single place to put things. Ideas, links, and notes scatter across a
 
 ---
 
-### Week 2 — The Librarian: "Teach AI to Organize For You"
+## Week 2 — The Librarian: "Teach AI to Organize For You"
 
-#### Problem
+### Problem
+A pile of raw captures is still a mess. Manual tagging never happens. Make the AI do the filing —
+and make it notice when two notes are about the same thing and link them automatically.
 
-A pile of raw captures is still a mess. Manual tagging never happens. Make the AI do the filing — and make it notice when two notes are about the same thing and link them automatically.
-
-#### Build
-
+### Build
 **2.1 — Auto-Classify (The Sorting Hat)**
-
 - Write a function that sends any raw capture to a free LLM (Groq / Llama 3) and gets back:
-  - a category (using the PARA framework: Projects, Areas, Resources, Archives)
-  - tags
-  - a one-line summary
+  - a **category** (using the **PARA** framework: Projects, Areas, Resources, Archives)
+  - **tags**
+  - a **one-line summary**
 - Run it across last week's real captures and watch them organize themselves.
 
 **2.2 — Auto-Link Related Notes (Connect the Dots)**
+- Compute **embeddings** for each note (sentence-transformers, local + free).
+- Compare each new capture against existing notes in `wiki/`.
+- When content is related (similarity above a threshold), **auto-insert a link** between them.
+- No manual tagging — the system notices relationships on its own.
 
-- Compute embeddings for each note (`sentence-transformers`, local + free)
-- Compare each new capture against existing notes in `wiki/`
-- When content is related (similarity above a threshold), auto-insert a link between them
-- No manual tagging — the system notices relationships on its own
+### Deliverable ("Ship the Self-Organizing Wiki")
+- A pipeline that auto-classifies raw captures with PARA and auto-links related notes.
+- Run on **15+ real items** → an organized `wiki/` folder with linked notes.
+- 🏅 **Badge: The Librarian**
 
-#### Deliverable: Ship the Self-Organizing Wiki
-
-- A pipeline that auto-classifies raw captures with PARA and auto-links related notes
-- Run on 15+ real items → an organized `wiki/` folder with linked notes
-- 🏅 Badge: **The Librarian**
-
-#### Acceptance Criteria
-
+### Acceptance Criteria
 - [ ] Any raw capture → category + tags + summary automatically
 - [ ] PARA categorization working
 - [ ] Embeddings computed per note
@@ -116,38 +104,34 @@ A pile of raw captures is still a mess. Manual tagging never happens. Make the A
 
 ---
 
-### Week 3 — The Cartographer: "Visualize the Brain"
+## Week 3 — The Cartographer: "Visualize the Brain"
 
-#### Problem
+### Problem
+Your knowledge is now organized and linked — but you can't *see* it. Turn the wiki into
+something you can actually look at, explore, and watch think.
 
-Your knowledge is now organized and linked — but you can't see it. Turn the wiki into something you can actually look at, explore, and watch think.
-
-#### Build
-
+### Build
 **3.1 — Graph Data Model (Give It a Shape)**
-
-- Write a script that reads every note and its links
-- Build a nodes-and-edges representation in memory:
-  - every note → a node
-  - every relationship/link → an edge
-- Export it as clean JSON
+- Write a script that reads every note and its links.
+- Build a **nodes-and-edges** representation in memory:
+  - every note → a **node**
+  - every relationship/link → an **edge**
+- Export it as clean **JSON**.
 
 **3.2 — Interactive Graph (The Brain Comes Alive)**
-
-- Use a JS graph library (`vis-network` or `Cytoscape.js`) to render:
+- Use a JS graph library (**vis-network** or **Cytoscape.js**) to render:
   - notes as nodes (that pulse / are visually alive)
   - links as edges
-  - hover popups that reveal each note's content
-  - drag-to-explore and zoom
-- A force-directed graph of your own knowledge
+  - **hover popups** that reveal each note's content
+  - **drag-to-explore** and **zoom**
+- A **force-directed** graph of your own knowledge.
 
-#### Deliverable: Ship the Living Brain
+### Deliverable ("Ship the Living Brain")
+- Your wiki converted to a graph and rendered as an interactive visual brain (hover, drag, zoom),
+  built from your real notes.
+- 🏅 **Badge: The Cartographer**
 
-- Your wiki converted to a graph and rendered as an interactive visual brain (hover, drag, zoom), built from your real notes
-- 🏅 Badge: **The Cartographer**
-
-#### Acceptance Criteria
-
+### Acceptance Criteria
 - [ ] Script builds nodes + edges from notes and exports clean JSON
 - [ ] Interactive force-directed graph renders from that JSON
 - [ ] Hover reveals note content
@@ -156,39 +140,34 @@ Your knowledge is now organized and linked — but you can't see it. Turn the wi
 
 ---
 
-### Week 4 — The Oracle: "Ask It Anything, Ship It Public"
+## Week 4 — The Oracle: "Ask It Anything, Ship It Public"
 
-#### Problem
+### Problem
+A visual brain is beautiful, but the real payoff is **answers**. Wire up natural-language
+search over everything you know — then package the whole thing into one deployable product.
 
-A visual brain is beautiful, but the real payoff is answers. Wire up natural-language search over everything you know — then package the whole thing into one deployable product.
-
-#### Build
-
+### Build
 **4.1 — Ask Your Brain (Natural Language Search)**
-
 - Build a single `ask()` function that combines:
-  - the embeddings (find relevant notes to a question)
-  - the wiki (the source content)
-  - an LLM (synthesize an answer from retrieved notes)
-- This is retrieval-augmented Q&A over your own knowledge
-- Test against real questions about your own captured notes
+  - the **embeddings** (find relevant notes to a question)
+  - the **wiki** (the source content)
+  - an **LLM** (synthesize an answer from retrieved notes)
+- This is retrieval-augmented Q&A over your own knowledge.
+- Test against real questions about your own captured notes.
 
 **4.2 — UI, Deployment, Public URL (Give It a Face)**
-
-- Assemble everything into one Streamlit app:
+- Assemble everything into **one Streamlit app**:
   - the interactive brain graph
   - the ask-anything search bar
-- Deploy to a free platform (Streamlit Cloud / HF Spaces)
-- Get a public URL anyone can open
+- Deploy to a free platform (**Streamlit Cloud / HF Spaces**).
+- Get a **public URL** anyone can open.
 
-#### Deliverable: Ship SecondSelf (Final Product)
+### Deliverable ("Ship SecondSelf" — the final product)
+Deploy the complete system — capture → auto-classify → auto-link → live interactive graph →
+ask-anything search — all wired into one Streamlit app with a public URL.
+- 🏅 **Badge: The Oracle**
 
-Deploy the complete system — capture → auto-classify → auto-link → live interactive graph → ask-anything search — all wired into one Streamlit app with a public URL.
-
-- 🏅 Badge: **The Oracle**
-
-#### Acceptance Criteria
-
+### Acceptance Criteria
 - [ ] `ask()` returns answers synthesized from your own notes (retrieval + LLM)
 - [ ] One Streamlit app contains both the graph and the search bar
 - [ ] Deployed live with a public URL
@@ -196,12 +175,13 @@ Deploy the complete system — capture → auto-classify → auto-link → live 
 
 ---
 
-## Final Deliverables (Whole Project)
+## Final Deliverables (whole project)
 
-- [ ] Public GitHub repo with a clean README + setup instructions
-- [ ] Live deployed URL — interactive graph + ask-your-brain search, both working
+- [ ] Public **GitHub repo** with a clean README + setup instructions
+- [ ] **Live deployed URL** — interactive graph + ask-your-brain search, both working
 - [ ] End-to-end flow verified: capture → classify → link → graph → ask
-- [ ] All 4 weekly milestones complete (Capture Pipeline, Self-Organizing Wiki, Living Brain, SecondSelf deployment)
+- [ ] All 4 weekly milestones complete (Capture Pipeline, Self-Organizing Wiki, Living Brain,
+      SecondSelf deployment)
 
 ---
 
@@ -222,8 +202,6 @@ secondself/
 └── README.md
 ```
 
----
-
 ## Suggested Build Order in Cursor
 
 1. Scaffold repo structure + `requirements.txt`
@@ -236,41 +214,3 @@ secondself/
 8. `app.py` → Streamlit app combining graph + search (Week 4.2)
 9. Deploy to Streamlit Cloud / HF Spaces → public URL
 10. Write README, push to GitHub
-
----
-
-## AI Tools
-
-- [Cursor](https://cursor.com/download)
-- [Antigravity IDE](https://antigravity.google/product/antigravity-ide)
-- [Qoder](https://qoder.com/)
-- [Devin](https://devin.ai/download/)
-- VS Code + Claude
-
----
-
-## Project Documentation Workflow
-
-### Context Files
-
-| File | Purpose |
-|------|---------|
-| `Problem-statement.md` | The problem you are solving |
-| `architecture.md` | How we will build the project |
-| `implementation-plan.md` | Phase-wise implementation plan |
-| `edge-case.md` | Corner scenarios and edge cases |
-
-### Implementation Phases
-
-- **Phase 0** → Setup
-- **Phases 1–5** → Implement project code
-- **Phases 6–7** → Local testing
-- **Phases 8–9** → Deploy + final round of testing
-
-### Starter Prompts
-
-1. Generate a detailed architecture for making this project using `@Problem-statement.md`
-2. Save the architecture into `architecture.md`
-3. Generate a phase-wise `implementation-plan.md` using `@architecture.md` and `@Problem-statement.md`
-4. Generate an `edge-case.md` for storing all corner scenarios and edge cases using `@architecture.md` and `@implementation-plan.md`
-5. Implement Phase 0 as per `@implementation-plan.md`
