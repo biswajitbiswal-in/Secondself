@@ -1,46 +1,45 @@
 # SecondSelf — Phase-Wise Implementation Plan
 
-> **Sources:** [Problem-statement.md](./Problem-statement.md) · [architecture.md](./architecture.md)  
-> **Purpose:** Step-by-step execution plan from zero to deployed product.
+A step-by-step build guide for SecondSelf, derived from `PROBLEM_STATEMENT.md` and `architecture.md`. Each phase is self-contained, testable on **real data**, and its output feeds the next phase.
 
 ---
 
-## Plan Overview
+## How to Use This Document
 
-| Phase | Name | Maps To | Goal |
-|-------|------|---------|------|
-| **0** | Setup | Pre-Week 1 | Scaffold repo, config, dependencies, folders |
-| **1** | Capture Pipeline | Week 1 — The Archivist | One command saves anything to `raw/` |
-| **2** | Auto-Classify | Week 2.1 — The Librarian | LLM assigns PARA, tags, summary |
-| **3** | Auto-Link | Week 2.2 — The Librarian | Embeddings + similarity linking |
-| **4** | Graph Builder & Viz | Week 3 — The Cartographer | `graph.json` + interactive graph |
-| **5** | Ask + Streamlit App | Week 4 — The Oracle | RAG Q&A + unified UI |
-| **6** | Local Module Testing | — | Unit/integration tests per module |
-| **7** | End-to-End Local Testing | — | Full pipeline on real personal data |
-| **8** | Deployment | Week 4.2 | Streamlit Cloud / HF Spaces + public URL |
-| **9** | Production Validation | Final deliverables | Live smoke tests, README, GitHub |
+1. Complete phases **in order** — do not skip ahead.
+2. Test every phase on **your own notes, links, and files** (not dummy data).
+3. Check off acceptance criteria before moving to the next phase.
+4. Each phase ends with a **ship checkpoint** — a working artifact you can demo.
 
-### Pipeline Dependency Chain
-
-```
-Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9
-           raw/      wiki/     links     graph.json   app.py
-```
-
-**Rule:** Do not start Phase N until Phase N−1 acceptance criteria pass.
+**Total timeline:** 4 weeks (one phase per week).
 
 ---
 
-## Phase 0 — Setup
+## Phase Overview
 
-**Goal:** Create a runnable project skeleton with configuration, dependencies, and folder structure.
+| Phase | Name | Badge | Primary Output |
+|-------|------|-------|----------------|
+| 0 | Foundation | — | Repo scaffold, deps, shared libs |
+| 1 | The Archivist | 🏅 The Archivist | `capture.py` + 10+ items in `raw/` |
+| 2 | The Librarian | 🏅 The Librarian | Classified + linked `wiki/` (15+ items) |
+| 3 | The Cartographer | 🏅 The Cartographer | `graph.json` + interactive graph |
+| 4 | The Oracle | 🏅 The Oracle | `ask()` + Streamlit app on public URL |
 
-**Duration estimate:** 1–2 hours
+```
+Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──▶ Phase 3 ──▶ Phase 4
+ scaffold     capture     classify      graph        RAG +
+              raw/        link wiki     visualize    deploy
+```
+
+---
+
+## Phase 0 — Foundation (Day 0)
+
+**Goal:** Scaffold the repo so every later phase has a consistent home for data and shared code.
 
 ### Tasks
 
-- [ ] **0.1** Initialize Git repository and create `.gitignore`
-- [ ] **0.2** Create directory structure:
+- [ ] **0.1** Initialize git repo and create folder structure:
 
   ```
   secondself/
@@ -50,738 +49,589 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 
   │   ├── Areas/
   │   ├── Resources/
   │   └── Archives/
-  ├── embeddings/
-  ├── templates/          # HTML graph template (Phase 4)
-  └── docs/                 # optional: move planning docs here
+  ├── data/
+  ├── lib/
+  └── static/
   ```
 
-- [ ] **0.3** Create `requirements.txt`:
+- [ ] **0.2** Create `requirements.txt`:
 
   ```
-  streamlit>=1.28.0
-  groq>=0.4.0
-  sentence-transformers>=2.2.0
-  numpy>=1.24.0
-  python-frontmatter>=1.0.0
-  requests>=2.31.0
+  streamlit>=1.32
+  groq>=0.4
+  sentence-transformers>=2.3
+  numpy>=1.24
   pyyaml>=6.0
+  pypdf>=4.0
+  requests>=2.31
+  beautifulsoup4>=4.12
+  python-dotenv>=1.0
   ```
 
-- [ ] **0.4** Create `config.py` with paths and constants (from architecture §8.1)
-- [ ] **0.5** Create `.env.example`:
-
-  ```
-  GROQ_API_KEY=your_groq_api_key_here
-  ```
-
-- [ ] **0.6** Set up Python virtual environment and install dependencies:
+- [ ] **0.3** Create virtual environment and install dependencies:
 
   ```bash
   python -m venv .venv
-  .venv\Scripts\activate        # Windows
+  source .venv/bin/activate   # Windows: .venv\Scripts\activate
   pip install -r requirements.txt
   ```
 
-- [ ] **0.7** Register for a free [Groq API key](https://console.groq.com/) (needed from Phase 2)
-- [ ] **0.8** Add placeholder module files with docstrings:
-  - `capture.py`, `classify.py`, `link.py`, `build_graph.py`, `ask.py`, `app.py`
-- [ ] **0.9** Create stub `README.md` with project name and setup steps
+- [ ] **0.4** Create `.env.example` and `.gitignore`:
 
-### Deliverables
+  ```
+  # .env.example
+  GROQ_API_KEY=your_key_here
+  ```
 
-| Artifact | Description |
-|----------|-------------|
-| Repo scaffold | All folders and stub files exist |
-| `config.py` | Central paths, thresholds, model names |
-| `requirements.txt` | Pinned minimum versions |
-| `.gitignore` | Excludes `.venv/`, `.env`, `__pycache__/`, `*.pyc` |
-| Working venv | `pip install -r requirements.txt` succeeds |
+  ```
+  # .gitignore (minimum)
+  .venv/
+  .env
+  data/embeddings.pkl
+  __pycache__/
+  *.pyc
+  .DS_Store
+  ```
+
+- [ ] **0.5** Implement `lib/models.py` — shared dataclasses:
+
+  | Model | Fields |
+  |-------|--------|
+  | `CaptureMeta` | `id`, `timestamp`, `type`, `source`, `original_filename`, `content_hash` |
+  | `CaptureResult` | `id`, `path`, `type` |
+  | `WikiNote` | `id`, `raw_id`, `para`, `tags`, `summary`, `created`, `links`, `body` |
+  | `GraphNode` | `id`, `label`, `para`, `tags`, `summary`, `content_preview`, `group` |
+  | `GraphEdge` | `source`, `target`, `weight`, `type` |
+  | `AskResult` | `answer`, `sources` |
+
+- [ ] **0.6** Implement `lib/storage.py` — filesystem helpers:
+
+  | Function | Purpose |
+  |----------|---------|
+  | `generate_capture_id()` | `{YYYY-MM-DD}_{uuid8}` |
+  | `write_raw_capture(meta, content)` | Create `raw/{id}/` folder |
+  | `read_raw_captures()` | List all unprocessed raw items |
+  | `write_wiki_note(note)` | Write `wiki/{para}/{id}.md` with YAML frontmatter |
+  | `read_wiki_notes()` | Parse all wiki markdown files |
+  | `load_index()` / `save_index()` | Read/write `data/index.json` |
+  | `content_hash(data)` | SHA-256 for dedup / change detection |
+
+- [ ] **0.7** Initialize `data/index.json`:
+
+  ```json
+  {
+    "raw_processed": {},
+    "embeddings_version": "all-MiniLM-L6-v2",
+    "last_graph_build": null
+  }
+  ```
+
+### Verification
+
+- [ ] `python -c "from lib import models, storage"` runs without error
+- [ ] All directories exist; `wiki/` has four PARA subfolders
+
+### Deliverable
+
+Repo scaffold with shared models and storage layer — no user-facing features yet.
+
+---
+
+## Phase 1 — The Archivist (Week 1)
+
+**Goal:** One command captures any note, link, or file into `raw/` with timestamp + unique ID.
+
+**Badge:** 🏅 The Archivist
+
+### Tasks
+
+- [ ] **1.1** Implement `capture.py` core functions:
+
+  | Function | Input | Output |
+  |----------|-------|--------|
+  | `capture_note(text)` | Plain text / markdown string | `CaptureResult` |
+  | `capture_link(url, notes="")` | URL + optional notes | `CaptureResult` |
+  | `capture_file(path)` | Path to local file | `CaptureResult` |
+
+  Each function must:
+  1. Generate ID via `generate_capture_id()`
+  2. Record ISO timestamp
+  3. Write `raw/{id}/meta.json`
+  4. Write content file (`content.md`, `content.txt`, or `content.{ext}`)
+  5. Print confirmation: `Captured → raw/2026-07-06_a1b2c3d4`
+
+- [ ] **1.2** Implement CLI with `argparse`:
+
+  ```bash
+  python capture.py note "Remember to review embeddings paper"
+  python capture.py link "https://arxiv.org/abs/..."
+  python capture.py file ./documents/resume.pdf
+  python capture.py                          # interactive stdin mode
+  ```
+
+- [ ] **1.3** Handle edge cases:
+
+  | Case | Behavior |
+  |------|----------|
+  | File does not exist | Print error, exit code 1 |
+  | Empty note text | Reject with message |
+  | Binary file | Copy as-is; record `original_filename` in meta |
+  | Duplicate content | Warn (hash check); still allow capture |
+
+- [ ] **1.4** Capture **10+ real items** from your own scattered information:
+
+  Suggested mix:
+  - 4–5 text notes (ideas, todos, journal snippets)
+  - 3–4 bookmarks (articles, docs, repos)
+  - 2–3 files (PDF, markdown doc, image with notes)
+
+### File Deliverables
+
+| File | Description |
+|------|-------------|
+| `capture.py` | CLI + capture functions |
+| `raw/{id}/meta.json` | Metadata per capture |
+| `raw/{id}/content.*` | Raw content per capture |
 
 ### Acceptance Criteria
 
-- [ ] `raw/`, `wiki/` (with 4 PARA subfolders), `embeddings/` exist
-- [ ] Virtual environment activates and imports `streamlit`, `groq`, `sentence_transformers` without error
-- [ ] `config.py` loads without error
-- [ ] `.env` is gitignored; `.env.example` is committed
+- [ ] `raw/` and `wiki/` folder structure exists
+- [ ] One command captures a note, a link, AND a file
+- [ ] Every capture has a timestamp + unique ID
+- [ ] 10+ real items captured (not test data)
 
-### Verification Command
+### Ship Checkpoint
 
 ```bash
-python -c "import config; print('Setup OK')"
+# Demo: capture three types in one session
+python capture.py note "Career goal: transition to ML engineering by Q4"
+python capture.py link "https://huggingface.co/sentence-transformers"
+python capture.py file ~/Downloads/some-paper.pdf
+ls raw/   # should show 10+ folders
 ```
 
 ---
 
-## Phase 1 — Capture Pipeline
+## Phase 2 — The Librarian (Week 2)
 
-**Goal:** Ship the capture pipeline — one command saves notes, links, and files to `raw/` with timestamp + unique ID.
+**Goal:** Auto-classify raw captures with PARA + tags + summary, then auto-link related notes via embeddings.
 
-**Maps to:** Week 1 — The Archivist  
-**Duration estimate:** 4–6 hours
+**Badge:** 🏅 The Librarian
 
-### Tasks
+### Sub-Phase 2.1 — Auto-Classify (Days 1–3)
 
-- [ ] **1.1** Implement core helpers in `capture.py`:
-  - `generate_id()` → UUID4 string
-  - `generate_timestamp()` → ISO 8601, timezone-aware
-  - `build_filename(id, timestamp, ext)` → `{YYYYMMDD}_{HHMMSS}_{short_id}.{ext}`
-  - `write_capture(content, metadata)` → write markdown with YAML frontmatter
+- [ ] **2.1.1** Sign up for [Groq](https://console.groq.com/) and add `GROQ_API_KEY` to `.env`
 
-- [ ] **1.2** Implement capture functions:
-  - `capture_note(text: str) -> str`
-  - `capture_link(url: str) -> str` — fetch URL with `requests`, timeout 10s, size limit
-  - `capture_file(path: str) -> str` — copy/read file, reject executables, cap at 10 MB
+- [ ] **2.1.2** Implement `lib/llm.py`:
 
-- [ ] **1.3** Define raw capture schema (architecture §3.2):
+  | Function | Purpose |
+  |----------|---------|
+  | `call_llm(prompt, system="")` | Groq API wrapper with retry |
+  | `classify_content(text)` | Returns `{para, tags, summary}` JSON |
+  | `synthesize_answer(context, question)` | RAG answer (used in Phase 4) |
+
+  Model: `llama-3.1-8b-instant`
+
+- [ ] **2.1.3** Implement text extraction helpers in `lib/storage.py` or `lib/extract.py`:
+
+  | Source type | Extraction method |
+  |-------------|-------------------|
+  | `note` | Read `content.md` directly |
+  | `link` | `requests` + `beautifulsoup4` strip HTML; fallback to URL string |
+  | `file` (PDF) | `pypdf` text extraction; fallback to filename |
+
+- [ ] **2.1.4** Implement `classify.py`:
+
+  ```
+  For each raw/ item not in index.json["raw_processed"]:
+      extract text → classify_content() → write wiki/{para}/{id}.md → update index.json
+  ```
+
+  Wiki note format:
 
   ```yaml
-  id, timestamp, type, source, original_filename (optional)
+  ---
+  id: a1b2c3d4
+  raw_id: 2026-07-06_a1b2c3d4
+  para: Projects
+  tags: [ml, career]
+  summary: "One-line summary"
+  created: 2026-07-06T22:30:00Z
+  links: []
+  ---
+
+  {cleaned body content}
   ```
 
-- [ ] **1.4** Add CLI with `argparse`:
+- [ ] **2.1.5** Run classifier on all Week 1 captures:
 
   ```bash
-  python capture.py "My idea about RAG"
-  python capture.py --link "https://example.com/article"
-  python capture.py --file "./documents/report.pdf"
+  python classify.py
   ```
 
-- [ ] **1.5** Add basic logging (`logging.info` on each successful capture)
-- [ ] **1.6** Capture 10+ real items from your own scattered notes, links, and files
+- [ ] **2.1.6** Manually spot-check 5 notes — verify PARA categories make sense
 
-### Deliverables
+### Sub-Phase 2.2 — Auto-Link (Days 4–7)
 
-| Artifact | Description |
-|----------|-------------|
-| `capture.py` | Working CLI + library functions |
-| `raw/` | 10+ real captured items with valid frontmatter |
+- [ ] **2.2.1** Implement `lib/embeddings.py`:
+
+  | Function | Purpose |
+  |----------|---------|
+  | `load_model()` | Load `all-MiniLM-L6-v2` (cached) |
+  | `embed_text(text)` | Return 384-dim vector |
+  | `cosine_similarity(a, b)` | Similarity score |
+  | `load_embeddings()` / `save_embeddings()` | `data/embeddings.pkl` |
+
+- [ ] **2.2.2** Implement `link.py`:
+
+  ```
+  For each wiki note (new or changed):
+      embed(title + summary + body)
+      compare vs all existing embeddings
+      if similarity ≥ 0.75:
+          add to frontmatter links[]
+          append [[other-id]] in body (deduplicated)
+      save embedding to embeddings.pkl
+  ```
+
+- [ ] **2.2.3** Tune similarity threshold:
+
+  | Threshold | Effect |
+  |-----------|--------|
+  | 0.65 | More links, some noise |
+  | 0.75 | **Start here** — balanced |
+  | 0.80 | Fewer, higher-confidence links |
+
+- [ ] **2.2.4** Implement `pipeline.py` orchestrator:
+
+  ```bash
+  python pipeline.py classify   # classify only
+  python pipeline.py link       # link only
+  python pipeline.py process    # classify + link
+  ```
+
+- [ ] **2.2.5** Capture 5+ additional real items, run full pipeline → 15+ total in `wiki/`
+
+### File Deliverables
+
+| File | Description |
+|------|-------------|
+| `lib/llm.py` | Groq client + classify/synthesize |
+| `lib/embeddings.py` | sentence-transformers wrapper |
+| `classify.py` | Raw → wiki classifier |
+| `link.py` | Embedding similarity linker |
+| `pipeline.py` | Orchestration script |
+| `wiki/{para}/*.md` | 15+ classified notes |
+| `data/embeddings.pkl` | Embedding index |
+| `data/index.json` | Processing state |
 
 ### Acceptance Criteria
 
-- [ ] One command captures a **note**, a **link**, AND a **file**
-- [ ] Every capture has a **timestamp** + **unique ID** in frontmatter
-- [ ] Filenames follow `{YYYYMMDD}_{HHMMSS}_{short_id}.{ext}` convention
-- [ ] Invalid URLs and oversized files fail gracefully with error messages
-- [ ] 10+ real items in `raw/` (not synthetic test data)
+- [ ] Any raw capture → category + tags + summary automatically
+- [ ] PARA categorization working (all four categories used appropriately)
+- [ ] Embeddings computed per note
+- [ ] Related notes auto-linked (no manual tagging)
+- [ ] Runs on 15+ real items → organized `wiki/`
 
-### Verification Commands
+### Ship Checkpoint
 
 ```bash
-python capture.py "Learning plan for SecondSelf project"
-python capture.py --link "https://python.org"
-python capture.py --file "README.md"
-dir raw\
+python pipeline.py process
+find wiki/ -name "*.md" | wc -l    # ≥ 15
+grep -r "\[\[" wiki/ | head        # wikilinks present
 ```
 
-### Badge
-
-🏅 **The Archivist**
+Open 2–3 linked notes side by side — confirm the connections are meaningful.
 
 ---
 
-## Phase 2 — Auto-Classify (PARA)
+## Phase 3 — The Cartographer (Week 3)
 
-**Goal:** Send raw captures to Groq (Llama 3) and produce organized wiki notes with PARA category, tags, and summary.
+**Goal:** Convert the linked wiki into a force-directed interactive graph you can explore.
 
-**Maps to:** Week 2.1 — The Librarian  
-**Duration estimate:** 6–8 hours  
-**Depends on:** Phase 1
+**Badge:** 🏅 The Cartographer
 
-### Tasks
+### Sub-Phase 3.1 — Graph Data Model (Days 1–3)
 
-- [ ] **2.1** Create `llm_client.py` helper:
-  - `complete(system, user) -> str`
-  - Load `GROQ_API_KEY` from environment
-  - Handle timeouts and retries (1 retry on failure)
+- [ ] **3.1.1** Implement `build_graph.py`:
 
-- [ ] **2.2** Write classification prompt with PARA definitions (architecture §5.4):
-  - System prompt: PARA framework + strict JSON output schema
-  - User prompt: raw capture content (truncate to `MAX_CONTENT_CHARS`)
+  | Step | Logic |
+  |------|-------|
+  | Parse nodes | One node per `wiki/**/*.md` |
+  | Parse edges | From `links[]` frontmatter + `[[id]]` in body |
+  | Deduplicate | Edge key = `(min(source,target), max(source,target))` |
+  | Enrich nodes | `label` = summary, `group` = para, `content_preview` = first 200 chars |
+  | Export | Write `data/graph.json` |
 
-- [ ] **2.3** Implement `classify_raw(raw_path: Path) -> Path` in `classify.py`:
-  - Read raw file + frontmatter
-  - Call LLM → parse JSON `{ "para", "tags", "summary" }`
-  - Validate `para` is one of: Projects, Areas, Resources, Archives
-  - Write wiki note to `wiki/{PARA}/{id}.md`
+- [ ] **3.1.2** Validate `graph.json` schema:
 
-- [ ] **2.4** Define wiki note schema (architecture §3.3):
-
-  ```yaml
-  id, raw_id, para, tags, summary, created, updated, links: []
+  ```json
+  {
+    "nodes": [{ "id", "label", "para", "tags", "summary", "content_preview", "group" }],
+    "edges": [{ "source", "target", "weight", "type" }],
+    "metadata": { "generated_at", "node_count", "edge_count" }
+  }
   ```
 
-- [ ] **2.5** Implement `classify_all_raw() -> list[Path]`:
-  - Scan `raw/` for unclassified captures (no matching wiki note)
-  - Process each; log success/failure
-
-- [ ] **2.6** Add CLI:
-
-  ```bash
-  python classify.py --file raw/20260724_143022_a1b2c3d4.txt
-  python classify.py --all
-  ```
-
-- [ ] **2.7** Run classification on all Phase 1 captures
-
-### Deliverables
-
-| Artifact | Description |
-|----------|-------------|
-| `llm_client.py` | Groq wrapper with retry logic |
-| `classify.py` | Single + batch classification |
-| `wiki/` | Organized notes under PARA folders |
-
-### Acceptance Criteria
-
-- [ ] Any raw capture → **category + tags + summary** automatically
-- [ ] PARA categorization places files in correct subfolder
-- [ ] Invalid LLM JSON is retried once, then skipped with log entry
-- [ ] Raw files remain **immutable** (not deleted or modified)
-- [ ] All 10+ raw captures classified into `wiki/`
-
-### Verification Commands
-
-```bash
-set GROQ_API_KEY=your_key_here
-python classify.py --all
-dir wiki\Projects
-dir wiki\Resources
-```
-
-### Badge
-
-🏅 **The Librarian** (partial — completed with Phase 3)
-
----
-
-## Phase 3 — Auto-Link (Embeddings)
-
-**Goal:** Compute embeddings for wiki notes and auto-link related content above a similarity threshold.
-
-**Maps to:** Week 2.2 — The Librarian  
-**Duration estimate:** 6–8 hours  
-**Depends on:** Phase 2
-
-### Tasks
-
-- [ ] **3.1** Create `embedding.py` helper:
-  - `load_model()` — cache `all-MiniLM-L6-v2` singleton
-  - `embed_text(text: str) -> np.ndarray`
-  - `embed_note(note_path: Path) -> np.ndarray` — use `summary + tags + body[:N]`
-  - `cosine_similarity(a, b) -> float`
-  - `find_similar(query_vec, corpus, top_k) -> list[tuple[id, score]]`
-
-- [ ] **3.2** Implement embedding cache in `embeddings/`:
-  - Save `{note_id}.npy` per note
-  - Maintain `embeddings/index.json` with metadata
-
-- [ ] **3.3** Implement `link_note(wiki_path, threshold=0.75) -> list[str]` in `link.py`:
-  - Compute embedding for target note
-  - Compare against all other wiki note embeddings
-  - For matches ≥ threshold: update `links` in frontmatter + insert `[[related-id]]` in body
-
-- [ ] **3.4** Implement `link_all_wiki() -> int`:
-  - Process all wiki notes; return total links created
-
-- [ ] **3.5** Add CLI:
-
-  ```bash
-  python link.py --file wiki/Projects/abc123.md
-  python link.py --all
-  ```
-
-- [ ] **3.6** Capture 5+ additional real items, classify, and link — reach **15+ total wiki notes**
-
-### Deliverables
-
-| Artifact | Description |
-|----------|-------------|
-| `embedding.py` | Model loading, embed, similarity search |
-| `link.py` | Auto-linking pipeline |
-| `embeddings/` | Cached vectors for all wiki notes |
-| `wiki/` | 15+ notes with cross-links in frontmatter and body |
-
-### Acceptance Criteria
-
-- [ ] Embeddings computed per wiki note and cached to disk
-- [ ] Related notes auto-linked when similarity ≥ `SIMILARITY_THRESHOLD` (default 0.75)
-- [ ] No manual tagging required — links appear automatically
-- [ ] Notes with no similar matches save cleanly (no errors)
-- [ ] **15+ real items** in organized, linked `wiki/`
-
-### Verification Commands
-
-```bash
-python link.py --all
-python -c "import frontmatter; print(frontmatter.load(open('wiki/Projects/your-note.md')).metadata.get('links'))"
-```
-
-### Badge
-
-🏅 **The Librarian** (complete)
-
----
-
-## Phase 4 — Graph Builder & Interactive Visualization
-
-**Goal:** Convert linked wiki notes into `graph.json` and render an interactive force-directed graph.
-
-**Maps to:** Week 3 — The Cartographer  
-**Duration estimate:** 8–10 hours  
-**Depends on:** Phase 3
-
-### Tasks
-
-#### 4A — Graph Data Model
-
-- [ ] **4.1** Implement `build_graph(wiki_dir, output) -> dict` in `build_graph.py`:
-  - Scan `wiki/**/*.md`
-  - Parse frontmatter + `[[wikilinks]]` in body
-  - Build `nodes[]` with: id, label, para, tags, summary, content_preview, content_full
-  - Build `edges[]` with: source, target, type, weight
-  - Write `graph.json` with meta block (generated_at, node_count, edge_count)
-
-- [ ] **4.2** Add CLI:
+- [ ] **3.1.3** Run builder and inspect output:
 
   ```bash
   python build_graph.py
-  python build_graph.py --output graph.json
+  python -c "import json; g=json.load(open('data/graph.json')); print(g['metadata'])"
   ```
 
-- [ ] **4.3** Validate JSON against schema (architecture §3.4)
+### Sub-Phase 3.2 — Interactive Graph (Days 4–7)
 
-#### 4B — Interactive Graph
+- [ ] **3.2.1** Create `static/graph.html` with **vis-network**:
 
-- [ ] **4.4** Create `templates/graph.html`:
-  - Load `vis-network` from CDN
-  - Accept graph JSON injected by Python
-  - Force-directed layout with physics
-  - Node colors by PARA (architecture §6.3)
-  - Hover tooltip showing `content_full`
-  - Drag, zoom, pan enabled
+  - Load `graph.json` (inline or fetch)
+  - Force-directed layout (Barnes-Hut physics)
+  - Node colors by PARA `group`
+  - Hover tooltip: `summary` + `content_preview`
+  - Drag + zoom enabled
+  - Optional pulse animation on nodes
 
-- [ ] **4.5** Create standalone test script `render_graph.py` (optional):
-  - Opens graph in browser via simple HTTP server for quick testing before Streamlit
+- [ ] **3.2.2** Physics config starting point:
 
-- [ ] **4.6** Verify graph renders correctly with your real wiki data
+  ```javascript
+  physics: {
+    barnesHut: { gravitationalConstant: -8000, springLength: 150 },
+    stabilization: { iterations: 200 }
+  }
+  ```
 
-### Deliverables
+- [ ] **3.2.3** Test graph standalone in browser:
 
-| Artifact | Description |
-|----------|-------------|
-| `build_graph.py` | Wiki → JSON converter |
-| `graph.json` | Exported graph from real notes |
-| `templates/graph.html` | vis-network interactive renderer |
+  ```bash
+  python -m http.server 8000
+  # Open http://localhost:8000/static/graph.html
+  ```
+
+- [ ] **3.2.4** Verify interactions:
+
+  | Interaction | Expected |
+  |-------------|----------|
+  | Hover node | Tooltip with note summary |
+  | Drag node | Node moves, graph re-settles |
+  | Scroll | Zoom in/out |
+  | Click node | (Optional) highlight connected edges |
+
+- [ ] **3.2.5** Wire `build_graph.py` into `pipeline.py process` so graph rebuilds after linking
+
+### File Deliverables
+
+| File | Description |
+|------|-------------|
+| `build_graph.py` | Wiki → graph.json builder |
+| `data/graph.json` | Exported graph data |
+| `static/graph.html` | vis-network interactive viewer |
 
 ### Acceptance Criteria
 
-- [ ] Script builds nodes + edges and exports clean JSON
-- [ ] Interactive force-directed graph renders from JSON
+- [ ] Script builds nodes + edges from notes and exports clean JSON
+- [ ] Interactive force-directed graph renders from that JSON
 - [ ] Hover reveals note content
 - [ ] Drag + zoom work
-- [ ] Built from **real notes**, not dummy data
-- [ ] Empty wiki produces valid empty graph (not a crash)
+- [ ] Built from your real notes, not dummy data
 
-### Verification Commands
+### Ship Checkpoint
 
 ```bash
 python build_graph.py
-python -c "import json; g=json.load(open('graph.json')); print(g['meta'])"
-streamlit run render_graph.py   # if standalone test script created
+python -m http.server 8000
+# Open graph in browser — explore your knowledge brain
 ```
-
-### Badge
-
-🏅 **The Cartographer**
 
 ---
 
-## Phase 5 — Ask (RAG) + Streamlit App
+## Phase 4 — The Oracle (Week 4)
 
-**Goal:** Build retrieval-augmented Q&A and assemble graph + search into one Streamlit app.
+**Goal:** Ask questions in plain English, get answers from your notes, and deploy everything as a public Streamlit app.
 
-**Maps to:** Week 4 — The Oracle  
-**Duration estimate:** 10–12 hours  
-**Depends on:** Phase 4
+**Badge:** 🏅 The Oracle
 
-### Tasks
+### Sub-Phase 4.1 — Ask Your Brain (Days 1–3)
 
-#### 5A — RAG Q&A Engine
+- [ ] **4.1.1** Implement `ask.py`:
 
-- [ ] **5.1** Implement `ask(question, top_k=5) -> dict` in `ask.py`:
-  - Embed the question
-  - Load all cached note embeddings from `embeddings/`
-  - Retrieve top-k notes by cosine similarity
-  - Load full wiki content for retrieved notes
-  - Build LLM prompt: system (answer from context only) + user (context + question)
-  - Return `{ "answer": str, "sources": [{"id", "summary", "score"}] }`
-
-- [ ] **5.2** Handle edge cases:
-  - No relevant notes → return friendly fallback message
-  - Low similarity scores → mention low confidence
-
-- [ ] **5.3** Add CLI:
-
-  ```bash
-  python ask.py "What have I captured about machine learning?"
+  ```python
+  def ask(question: str, top_k: int = 5) -> AskResult:
   ```
 
-- [ ] **5.4** Test 5+ real questions against your own notes
+  Pipeline:
+  1. Embed question (`lib/embeddings.py`)
+  2. Retrieve top-K notes by cosine similarity from `embeddings.pkl`
+  3. Load full wiki bodies for retrieved IDs
+  4. Build RAG prompt with note context
+  5. Call `synthesize_answer()` via `lib/llm.py`
+  6. Return `{ answer, sources: [{id, summary, relevance_score, para}] }`
 
-#### 5B — Streamlit App
+- [ ] **4.1.2** RAG prompt template:
 
-- [ ] **5.5** Implement `app.py`:
-  - **Header:** "SecondSelf — Your Personal AI Second Brain"
-  - **Search bar:** text input + Ask button → calls `ask()`
-  - **Answer panel:** synthesized answer + source citations
-  - **Graph section:** embed `templates/graph.html` via `st.components.v1.html()`
-  - **Sidebar:** node/edge counts, PARA legend, "Rebuild Graph" button
+  ```
+  You are SecondSelf, answering from the user's personal knowledge base.
+  Use ONLY the provided notes. If the answer isn't in the notes, say so.
+  Cite sources as [note-id].
 
-- [ ] **5.6** Cache expensive resources:
+  Notes:
+  {retrieved_notes}
+
+  Question: {question}
+  ```
+
+- [ ] **4.1.3** Guardrails:
+
+  | Setting | Value |
+  |---------|-------|
+  | `top_k` | 5 (default) |
+  | Temperature | 0.3 |
+  | Max context | ~6000 tokens (truncate long notes) |
+  | No relevant notes | Return "I don't have notes about that" |
+
+- [ ] **4.1.4** Test with 5+ real questions about your captured notes:
+
+  ```bash
+  python ask.py "What are my career goals?"
+  python ask.py "What ML resources have I saved?"
+  python ask.py "Summarize my active projects"
+  ```
+
+### Sub-Phase 4.2 — Streamlit App + Deployment (Days 4–7)
+
+- [ ] **4.2.1** Implement `app.py` layout:
+
+  ```
+  ┌────────────────────────────────────────────────────┐
+  │  🧠 SecondSelf                    [Refresh Graph]  │
+  ├────────────────────────────────────────────────────┤
+  │  Ask your brain: [________________________] [Ask]  │
+  │  Answer panel + source citations                 │
+  ├────────────────────────────────────────────────────┤
+  │  Interactive Knowledge Graph (vis-network)       │
+  ├────────────────────────────────────────────────────┤
+  │  Sidebar: Capture | Process | Stats              │
+  └────────────────────────────────────────────────────┘
+  ```
+
+- [ ] **4.2.2** Wire components:
+
+  | UI Element | Backend |
+  |------------|---------|
+  | Ask bar | `ask.ask(question)` |
+  | Graph | `st.components.v1.html()` embedding vis-network |
+  | Capture form | `capture.capture_note(text)` |
+  | Process button | `pipeline.process()` → rebuild graph |
+  | Stats sidebar | Count nodes/edges from `graph.json` |
+  | Refresh button | Re-run `build_graph.py`, reload component |
+
+- [ ] **4.2.3** Add caching:
 
   ```python
   @st.cache_resource
-  def load_embedding_model(): ...
+  def load_embeddings(): ...
 
   @st.cache_data
-  def load_graph_json(): ...
+  def load_graph(): ...
   ```
 
-- [ ] **5.7** Optional: create `pipeline.py` orchestrator:
-
-  ```bash
-  python pipeline.py --classify --link --graph
-  ```
-
-- [ ] **5.8** Run locally:
+- [ ] **4.2.4** Test locally:
 
   ```bash
   streamlit run app.py
   ```
 
-### Deliverables
+  Verify full flow: capture → process → graph updates → ask returns answer.
 
-| Artifact | Description |
-|----------|-------------|
-| `ask.py` | RAG Q&A with source citations |
-| `app.py` | Unified Streamlit UI (graph + search) |
-| `pipeline.py` | Optional batch orchestrator |
+- [ ] **4.2.5** Write `README.md`:
+
+  - Project description + screenshot
+  - Setup instructions (venv, deps, `.env`)
+  - Usage (capture, process, ask)
+  - Architecture overview (link to `architecture.md`)
+  - Live demo URL
+
+- [ ] **4.2.6** Push to GitHub (public repo)
+
+- [ ] **4.2.7** Deploy to **Streamlit Community Cloud**:
+
+  1. Connect GitHub repo at [share.streamlit.io](https://share.streamlit.io)
+  2. Set main file: `app.py`
+  3. Add secret: `GROQ_API_KEY`
+  4. Pre-commit `wiki/`, `data/graph.json`, `data/embeddings.pkl` for demo
+  5. Verify public URL loads
+
+- [ ] **4.2.8** End-to-end test on deployed app:
+
+  | Step | Action |
+  |------|--------|
+  | 1 | Open public URL |
+  | 2 | Graph renders with real nodes |
+  | 3 | Ask a question → get synthesized answer |
+  | 4 | Capture a new note via sidebar |
+  | 5 | Process → graph updates |
+
+### File Deliverables
+
+| File | Description |
+|------|-------------|
+| `ask.py` | RAG Q&A engine |
+| `app.py` | Streamlit UI |
+| `README.md` | Setup + usage docs |
+| Live URL | `https://secondself-{user}.streamlit.app` |
 
 ### Acceptance Criteria
 
 - [ ] `ask()` returns answers synthesized from your own notes (retrieval + LLM)
-- [ ] Sources list shows which notes were used
-- [ ] One Streamlit app contains **both** the graph and the search bar
-- [ ] Graph and Q&A work together in the same session
-- [ ] App runs locally without errors on real data
+- [ ] One Streamlit app contains both the graph and the search bar
+- [ ] Deployed live with a public URL
+- [ ] Full pipeline works end to end in the deployed app
 
-### Verification Commands
+### Ship Checkpoint
 
-```bash
-python ask.py "Summarize my project ideas"
-streamlit run app.py
-```
-
-### Badge
-
-🏅 **The Oracle** (partial — completed with Phase 8–9)
+Share your public URL. Demo: ask a question → see answer with sources → explore the graph.
 
 ---
 
-## Phase 6 — Local Module Testing
+## Final Integration Checklist
 
-**Goal:** Verify each module in isolation with targeted tests before full integration.
-
-**Duration estimate:** 4–6 hours  
-**Depends on:** Phase 5
-
-### Tasks
-
-- [ ] **6.1** Create `tests/` directory and install `pytest` (add to dev requirements)
-- [ ] **6.2** **Capture tests** (`tests/test_capture.py`):
-  - UUID uniqueness across multiple captures
-  - Timestamp is valid ISO 8601
-  - Note, link, and file capture types produce correct frontmatter
-  - Invalid file path raises clear error
-
-- [ ] **6.3** **Classify tests** (`tests/test_classify.py`):
-  - Mock Groq response → verify wiki file created in correct PARA folder
-  - Invalid JSON from LLM → retry then skip
-  - Tags and summary written to frontmatter
-
-- [ ] **6.4** **Link tests** (`tests/test_link.py`):
-  - Fixed embedding vectors → verify threshold behavior
-  - Similar notes get linked; dissimilar notes do not
-  - `links` array updated in frontmatter
-
-- [ ] **6.5** **Graph tests** (`tests/test_build_graph.py`):
-  - Fixture wiki folder → expected node and edge counts
-  - Wikilinks in body become edges
-  - Empty wiki → valid empty graph JSON
-
-- [ ] **6.6** **Ask tests** (`tests/test_ask.py`):
-  - Mock retrieval + mock LLM → verify answer structure
-  - No matches → fallback message returned
-  - Sources list populated correctly
-
-- [ ] **6.7** Run full test suite:
-
-  ```bash
-  pytest tests/ -v
-  ```
-
-### Deliverables
-
-| Artifact | Description |
-|----------|-------------|
-| `tests/` | Unit tests for all pipeline modules |
-| Test results | All tests passing locally |
-
-### Acceptance Criteria
-
-- [ ] Each module has at least 3 meaningful tests
-- [ ] LLM and embedding calls are mocked in unit tests (no API cost)
-- [ ] `pytest tests/ -v` passes with 0 failures
-- [ ] Tests cover happy path + at least one failure/edge path per module
-
-### Verification Command
-
-```bash
-pytest tests/ -v --tb=short
-```
-
----
-
-## Phase 7 — End-to-End Local Testing
-
-**Goal:** Run the complete pipeline on real personal data and validate the full user journey locally.
-
-**Duration estimate:** 3–4 hours  
-**Depends on:** Phase 6
-
-### Tasks
-
-- [ ] **7.1** **Fresh pipeline run** — execute in order:
-
-  ```bash
-  python capture.py "New idea captured during E2E test"
-  python capture.py --link "https://a-real-article-youve-read.com"
-  python classify.py --all
-  python link.py --all
-  python build_graph.py
-  python ask.py "What topics have I been exploring?"
-  streamlit run app.py
-  ```
-
-- [ ] **7.2** **Capture → Classify → Link → Graph → Ask checklist:**
-
-  | Step | Check |
-  |------|-------|
-  | Capture | New item appears in `raw/` with ID + timestamp |
-  | Classify | Wiki note created in correct PARA folder |
-  | Link | Related notes cross-linked automatically |
-  | Graph | New node visible in interactive graph |
-  | Ask | Question returns answer grounded in your notes |
-
-- [ ] **7.3** Test edge cases manually (see `edge-case.md` when available):
-  - Empty question submitted in Streamlit
-  - Very long note capture
-  - Duplicate URL capture
-  - Question with no matching notes
-
-- [ ] **7.4** Verify data counts:
-  - 15+ items in `wiki/`
-  - `graph.json` node_count matches wiki note count
-  - Embeddings exist for every wiki note
-
-- [ ] **7.5** Document any bugs found; fix before deployment
-
-### Deliverables
-
-| Artifact | Description |
-|----------|-------------|
-| E2E test log | Checklist with pass/fail for each step |
-| Bug fixes | All blockers resolved before Phase 8 |
-
-### Acceptance Criteria
-
-- [ ] Full pipeline works: **capture → classify → link → graph → ask**
-- [ ] Streamlit app loads graph and returns real answers
-- [ ] No crashes on empty states or missing data
-- [ ] All 4 weekly milestone acceptance criteria from Problem-statement.md pass locally
-
-### Verification
-
-Manual walkthrough — record results in a checklist or commit message before deploying.
-
----
-
-## Phase 8 — Deployment
-
-**Goal:** Deploy the Streamlit app to a public URL with secrets configured.
-
-**Maps to:** Week 4.2 — UI, Deployment, Public URL  
-**Duration estimate:** 3–5 hours  
-**Depends on:** Phase 7
-
-### Tasks
-
-- [ ] **8.1** Prepare repo for deployment:
-  - Ensure `app.py` is the Streamlit entry point
-  - Add `.streamlit/config.toml` (theme, layout)
-  - Pre-build `graph.json` and commit (or rebuild on startup)
-  - Pre-compute `embeddings/` and commit (faster cold start)
-
-- [ ] **8.2** Write production `README.md`:
-  - Project description and demo screenshot
-  - Setup instructions (venv, env vars, CLI usage)
-  - Architecture diagram (link to `architecture.md`)
-  - Public demo URL
-  - Privacy note: deployed app exposes your notes
-
-- [ ] **8.3** Push to GitHub (public repo)
-
-- [ ] **8.4** Deploy to **Streamlit Cloud** (primary):
-  1. Connect GitHub repo at [share.streamlit.io](https://share.streamlit.io)
-  2. Set main file: `app.py`
-  3. Add secret: `GROQ_API_KEY`
-  4. Deploy and wait for build
-
-- [ ] **8.5** Alternative: deploy to **Hugging Face Spaces** (optional backup)
-
-- [ ] **8.6** Verify deployed app loads within reasonable time (< 60s cold start)
-
-### Deliverables
-
-| Artifact | Description |
-|----------|-------------|
-| Public GitHub repo | Clean README + setup instructions |
-| Live URL | Streamlit Cloud or HF Spaces public link |
-| Secrets configured | `GROQ_API_KEY` in platform secrets manager |
-
-### Acceptance Criteria
-
-- [ ] App accessible at a **public URL** anyone can open
-- [ ] Interactive graph renders on deployed app
-- [ ] Ask bar returns answers (not API key errors)
-- [ ] No secrets exposed in repo or logs
-- [ ] README documents setup and usage
-
-### Verification
-
-Open public URL in incognito browser → ask a question → confirm graph loads.
-
-### Badge
-
-🏅 **The Oracle** (complete)
-
----
-
-## Phase 9 — Production Validation & Final Deliverables
-
-**Goal:** Final round of testing on the live deployment and confirm all project deliverables.
-
-**Duration estimate:** 2–3 hours  
-**Depends on:** Phase 8
-
-### Tasks
-
-- [ ] **9.1** **Production smoke tests** (on live URL):
-
-  | Test | Expected |
-  |------|----------|
-  | Page loads | App renders without 500 error |
-  | Graph visible | Nodes and edges display; drag/zoom work |
-  | Hover works | Note content appears on node hover |
-  | Ask works | Question returns synthesized answer |
-  | Sources shown | Answer cites relevant notes |
-  | Empty question | Graceful validation message |
-  | Mobile view | Layout usable on smaller screens |
-
-- [ ] **9.2** **End-to-end on production:**
-  - Confirm full flow works in deployed environment
-  - Note any differences from local behavior; fix and redeploy
-
-- [ ] **9.3** **Final deliverables checklist** (from Problem-statement.md):
-
-  - [ ] Public GitHub repo with clean README + setup instructions
-  - [ ] Live deployed URL — interactive graph + ask-your-brain search
-  - [ ] End-to-end flow verified: capture → classify → link → graph → ask
-  - [ ] All 4 weekly milestones complete
-
-- [ ] **9.4** Tag release (optional):
-
-  ```bash
-  git tag -a v1.0.0 -m "SecondSelf v1.0 — initial public release"
-  git push origin v1.0.0
-  ```
-
-- [ ] **9.5** Update README with final demo URL and badge list
-
-### Deliverables
-
-| Artifact | Description |
-|----------|-------------|
-| Smoke test report | All production tests passing |
-| `v1.0.0` tag | Optional release marker |
-| Complete README | Demo URL, badges, architecture link |
-
-### Acceptance Criteria
-
-- [ ] All production smoke tests pass
-- [ ] Full pipeline verified end to end (locally for capture; deployed for graph + ask)
-- [ ] All 4 badges earned: Archivist, Librarian, Cartographer, Oracle
-- [ ] Project ready to share publicly
-
----
-
-## Master Checklist — All Phases
-
-Use this as a single progress tracker:
-
-| Phase | Status | Key Output |
-|-------|--------|------------|
-| 0 — Setup | [ ] | Repo scaffold, venv, config |
-| 1 — Capture | [ ] | `capture.py`, 10+ raw items |
-| 2 — Classify | [ ] | `classify.py`, wiki notes with PARA |
-| 3 — Auto-Link | [ ] | `link.py`, 15+ linked wiki notes |
-| 4 — Graph | [ ] | `graph.json`, interactive graph |
-| 5 — Ask + App | [ ] | `ask.py`, `app.py` running locally |
-| 6 — Module Tests | [ ] | `pytest` passing |
-| 7 — E2E Local | [ ] | Full pipeline on real data |
-| 8 — Deploy | [ ] | Public URL live |
-| 9 — Production | [ ] | All final deliverables complete |
-
----
-
-## File Creation Order
-
-Build files in this sequence to avoid dependency issues:
+Before calling the project complete, verify the full pipeline:
 
 ```
-1.  config.py
-2.  capture.py
-3.  llm_client.py
-4.  classify.py
-5.  embedding.py
-6.  link.py
-7.  build_graph.py
-8.  templates/graph.html
-9.  ask.py
-10. app.py
-11. pipeline.py          (optional)
-12. tests/test_*.py
-13. README.md             (finalize in Phase 8)
+Capture → Classify → Link → Graph → Ask → Deploy
 ```
+
+- [ ] Public **GitHub repo** with clean README + setup instructions
+- [ ] **Live deployed URL** — interactive graph + ask-your-brain search, both working
+- [ ] End-to-end flow verified in production
+- [ ] All 4 weekly milestones complete:
+
+  | Milestone | Status |
+  |-----------|--------|
+  | Capture Pipeline (Phase 1) | ☐ |
+  | Self-Organizing Wiki (Phase 2) | ☐ |
+  | Living Brain (Phase 3) | ☐ |
+  | SecondSelf Deployment (Phase 4) | ☐ |
 
 ---
 
-## Environment & Secrets Reference
+## Dependency Map (Build Order)
 
-| Variable | Phases | Where to Set |
-|----------|--------|--------------|
-| `GROQ_API_KEY` | 2, 3, 5, 8, 9 | `.env` locally; Streamlit secrets in production |
-| `SECONDSELF_DATA_DIR` | 8+ | Optional override for deployment data root |
+```
+Phase 0: lib/models.py, lib/storage.py, requirements.txt
+    │
+    ▼
+Phase 1: capture.py
+    │
+    ▼
+Phase 2: lib/llm.py → classify.py
+         lib/embeddings.py → link.py → pipeline.py
+    │
+    ▼
+Phase 3: build_graph.py → static/graph.html
+    │
+    ▼
+Phase 4: ask.py → app.py → deploy
+```
 
 ---
 
@@ -789,21 +639,41 @@ Build files in this sequence to avoid dependency issues:
 
 | Risk | Phase | Mitigation |
 |------|-------|------------|
-| Groq rate limits | 2, 5 | Batch with delays; retry with backoff |
-| Slow embedding cold start | 3, 5, 8 | Cache model with `@st.cache_resource`; pre-compute embeddings |
-| LLM returns invalid JSON | 2 | Retry once; strict prompt; JSON parse with fallback |
-| Streamlit graph not rendering | 4, 5 | Test HTML template standalone first |
-| Public repo exposes personal notes | 8, 9 | Use demo subset; document privacy in README |
-| Large file capture | 1 | 10 MB cap; reject binaries |
+| Groq API rate limits | 2, 4 | Batch classify; add retry with backoff |
+| Embedding model slow on first load | 2, 4 | `@st.cache_resource` in Streamlit |
+| Too many / too few auto-links | 2 | Tune threshold (0.65–0.80) |
+| PDF text extraction fails | 2 | Fallback to filename; store raw file |
+| Graph too cluttered | 3 | Filter by PARA category; limit edge weight display |
+| Private notes on public URL | 4 | Use demo-safe data or document the tradeoff |
+| Streamlit iframe sizing | 4 | Set explicit height on `st.components.v1.html()` |
 
 ---
 
-## Next Steps After This Plan
+## Quick Reference — Commands
 
-1. Generate **`edge-case.md`** — corner scenarios for each phase
-2. **Implement Phase 0** — scaffold the repo
-3. Work through Phases 1–9 sequentially, checking acceptance criteria before moving on
+```bash
+# Phase 1
+python capture.py note "..."
+python capture.py link "https://..."
+python capture.py file ./doc.pdf
+
+# Phase 2
+python classify.py
+python link.py
+python pipeline.py process
+
+# Phase 3
+python build_graph.py
+python -m http.server 8000   # preview graph
+
+# Phase 4
+python ask.py "What are my career goals?"
+streamlit run app.py
+```
 
 ---
 
-*Generated from [architecture.md](./architecture.md) and [Problem-statement.md](./Problem-statement.md).*
+## References
+
+- [PROBLEM_STATEMENT.md](./PROBLEM_STATEMENT.md) — weekly goals and acceptance criteria
+- [architecture.md](./architecture.md) — data models, component design, deployment
