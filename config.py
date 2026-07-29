@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent
 RAW_DIR = BASE_DIR / "raw"
 WIKI_DIR = BASE_DIR / "wiki"
 EMBEDDINGS_DIR = BASE_DIR / "embeddings"
-GRAPH_PATH = BASE_DIR / "graph.json"
+GRAPH_PATH = BASE_DIR / "data" / "graph.json"
 TEMPLATES_DIR = BASE_DIR / "templates"
 
 # PARA Categories
@@ -28,7 +28,7 @@ PARA_CATEGORIES = ["Projects", "Areas", "Resources", "Archives"]
 SIMILARITY_THRESHOLD = 0.75
 TOP_K_RETRIEVAL = 5
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-GROQ_MODEL = "llama3-8b-8192"
+GROQ_MODEL = "llama-3.1-8b-instant"
 MAX_CONTENT_CHARS = 8000  # Character truncation limit for LLM processing
 
 # API Keys & External Credentials

@@ -11,19 +11,14 @@ Each capture creates a dedicated folder under `raw/{folder_name}/` containing:
 import sys
 from pathlib import Path
 
-# Auto-detect virtual environment if third-party modules are missing when invoked via system python
+# Import frontmatter for markdown metadata parsing
+# If it fails, give a clear installation instruction
 try:
     import frontmatter
 except ImportError:
-    base_dir = Path(__file__).resolve().parent
-    venv_python = base_dir / ".venv" / "Scripts" / "python.exe"
-    if venv_python.exists() and sys.executable != str(venv_python):
-        import subprocess
-        result = subprocess.run([str(venv_python), *sys.argv])
-        sys.exit(result.returncode)
-    else:
-        print("ERROR: Dependencies not found. Please activate the virtual environment (.venv) or run: pip install -r requirements.txt")
-        sys.exit(1)
+    print("ERROR: python-frontmatter not found. Please install dependencies:")
+    print("       pip install -r requirements.txt")
+    sys.exit(1)
 
 import argparse
 import datetime

@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SecondSelf — Knowledge Graph Viewer</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.6/standalone/umd/vis-network.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html,body { width:100%; height:100%; overflow:hidden; background:#0B0F19; font-family:'Inter','Segoe UI',system-ui,sans-serif; color:#E2E8F0; }
+
+        /* ── Network Canvas ── */
+        #network { width:100%; height:100%; }
+
+        /* ── Top Bar ── */
+        #topbar { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; gap:12px; padding:10px 16px; background:rgba(10,10,20,0.8); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,0.06); }
+        #topbar .brand { font-size:15px; font-weight:700; color:#a78bfa; letter-spacing:0.3px; white-space:nowrap; }
+        #topbar .brand span { color:rgba(255,255,255,0.35); font-weight:400; }
+        #topbar .sep { width:1px; height:24px; background:rgba(255,255,255,0.08); flex-shrink:0; }
+
+        /* Search */
+        #search-wrap { position:relative; flex:1; max-width:320px; }
+        #search-wrap input { width:100%; padding:7px 12px 7px 32px; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:rgba(255,255,255,0.04); color:#ddd; font-size:13px; outline:none; transition:border-color 0.2s; }
+        #search-wrap input:focus { border-color:#7c3aed; }
+        #search-wrap input::placeholder { color:#555; }
+        #search-wrap .icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#555; font-size:13px; pointer-events:none; }
+
+        /* Filter pills */
+        #filters { display:flex; gap:6px; flex-wrap:wrap; }
+        #filters .pill { padding:5px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:transparent; color:#888; font-size:11px; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+        #filters .pill:hover { border-color:rgba(255,255,255,0.2); color:#ccc; }
+        #filters .pill.active { background:rgba(124,58,237,0.2); border-color:#7c3aed; color:#a78bfa; }
+        #filters .pill .count { display:inline-block; margin-left:4px; padding:0 5px; border-radius:8px; background:rgba(255,255,255,0.06); font-size:10px; color:#666; }
+        #filters .pill.active .count { background:rgba(124,58,237,0.3); color:#a78bfa; }
+
+        /* Top bar right actions */
+        #top-actions { display:flex; gap:8px; align-items:center; margin-left:auto; flex-shrink:0; }
+        #top-actions button { padding:6px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); background:transparent; color:#888; font-size:12px; cursor:pointer; transition:all 0.2s; white-space:nowrap; display:flex; align-items:center; gap:5px; }
+        #top-actions button:hover { border-color:rgba(255,255,255,0.2); color:#ddd; background:rgba(255,255,255,0.04); }
+        #top-actions button.active-toggle { background:rgba(16,185,129,0.15); border-color:#10b981; color:#6ee7b7; }
+
+        /* ── Bottom Bar: Legend + Stats ── */
+        #bottombar { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:100; display:flex; align-items:center; gap:20px; padding:8px 20px; background:rgba(10,10,20,0.75); border-radius:12px; backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.06); pointer-events:auto; user-select:none; }
+        #bottombar .item { display:flex; align-items:center; gap:6px; font-size:11px; color:rgba(255,255,255,0.45); }
+        #bottombar .item .dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(255,255,255,0.1); flex-shrink:0; }
+        #bottombar .item .dot.projects { background:#7c3aed; }
+        #bottombar .item .dot.areas { background:#06b6d4; }
+        #bottombar .item .dot.resources { background:#10b981; }
+        #bottombar .item .dot.archives { background:#f59e0b; }
+        #bottombar .sep { width:1px; height:16px; background:rgba(255,255,255,0.08); flex-shrink:0; }
+        #bottombar #total-stats { font-size:11px; color:rgba(255,255,255,0.3); }
+
+        /* ── Tooltip ── */
+        .vis-tooltip { position:absolute !important; padding:14px 18px !important; background:rgba(16,16,36,0.95) !important; border:1px solid rgba(124,58,237,0.3) !important; border-radius:12px !important; box-shadow:0 8px 40px rgba(0,0,0,0.7) !important; color:#ddd !important; font-size:13px !important; max-width:360px !important; line-height:1.5 !important; pointer-events:none !important; z-index:9999 !important; backdrop-filter:blur(12px) !important; }
+        .vis-tooltip .tt-title { font-weight:600; font-size:14px; color:#fff; margin-bottom:3px; }
+        .vis-tooltip .tt-para { display:inline-block; padding:1px 8px; border-radius:4px; font-size:10px; font-weight:600; letter-spacing:0.5px; margin-bottom:5px; text-transform:uppercase; }
+        .vis-tooltip .tt-para.projects { background:rgba(124,58,237,0.2); color:#a78bfa; }
+        .vis-tooltip .tt-para.areas { background:rgba(6,182,212,0.2); color:#67e8f9; }
+        .vis-tooltip .tt-para.resources { background:rgba(16,185,129,0.2); color:#6ee7b7; }
+        .vis-tooltip .tt-para.archives { background:rgba(245,158,11,0.2); color:#fcd34d; }
+        .vis-tooltip .tt-summary { color:#bbb; font-size:12px; margin-bottom:4px; }
+        .vis-tooltip .tt-tags { margin-bottom:4px; }
+        .vis-tooltip .tt-tags span { display:inline-block; background:rgba(255,255,255,0.06); padding:0 6px; border-radius:3px; margin-right:4px; font-size:10px; color:#888; }
+        .vis-tooltip .tt-preview { font-size:11px; color:#666; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.06); }
+
+        /* ── Detail Modal ── */
+        #modal-overlay { position:fixed; inset:0; z-index:200; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); }
+        #modal-overlay.open { display:flex; }
+        #modal-box { background:#12122a; border:1px solid rgba(124,58,237,0.2); border-radius:16px; padding:28px; max-width:520px; width:90%; max-height:80vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.8); position:relative; animation:modalIn 0.2s ease; }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        #modal-box .close-btn { position:absolute; top:12px; right:16px; background:none; border:none; color:#555; font-size:24px; cursor:pointer; line-height:1; padding:4px; transition:color 0.2s; }
+        #modal-box .close-btn:hover { color:#fff; }
+        #modal-box h2 { font-size:17px; color:#fff; margin-bottom:16px; padding-right:30px; line-height:1.4; }
+        #modal-box .field { margin-bottom:14px; }
+        #modal-box .field label { font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#555; display:block; margin-bottom:3px; }
+        #modal-box .field .val { font-size:13px; color:#ccc; word-break:break-word; }
+        #modal-box .field .tags { display:flex; flex-wrap:wrap; gap:4px; }
+        #modal-box .field .tags span { background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; font-size:12px; color:#999; }
+        #modal-box .field .preview { font-size:12px; color:#777; line-height:1.6; white-space:pre-wrap; word-break:break-word; max-height:120px; overflow-y:auto; }
+        #modal-box .field .preview::-webkit-scrollbar { width:3px; }
+        #modal-box .field .preview::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:4px; }
+        #modal-box .para-badge { display:inline-block; padding:2px 10px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+        #modal-box .para-badge.projects { background:rgba(124,58,237,0.2); color:#a78bfa; }
+        #modal-box .para-badge.areas { background:rgba(6,182,212,0.2); color:#67e8f9; }
+        #modal-box .para-badge.resources { background:rgba(16,185,129,0.2); color:#6ee7b7; }
+        #modal-box .para-badge.archives { background:rgba(245,158,11,0.2); color:#fcd34d; }
+        #modal-box .connected-list { display:flex; flex-wrap:wrap; gap:4px; }
+        #modal-box .connected-list a { display:inline-block; padding:3px 10px; background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.15); border-radius:6px; font-size:12px; color:#a78bfa; cursor:pointer; text-decoration:none; transition:all 0.2s; }
+        #modal-box .connected-list a:hover { background:rgba(124,58,237,0.2); border-color:#7c3aed; }
+
+        /* ── File Upload ── */
+        #upload-area { position:fixed; inset:0; z-index:300; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); }
+        #upload-area.open { display:flex; }
+        #upload-box { background:#12122a; border:2px dashed rgba(124,58,237,0.3); border-radius:16px; padding:40px 50px; text-align:center; cursor:pointer; transition:border-color 0.3s; max-width:420px; width:90%; }
+        #upload-box:hover { border-color:#7c3aed; background:rgba(124,58,237,0.04); }
+        #upload-box.dragover { border-color:#a78bfa; background:rgba(124,58,237,0.08); }
+        #upload-box .icon { font-size:40px; margin-bottom:12px; }
+        #upload-box h3 { color:#ddd; font-size:16px; margin-bottom:6px; font-weight:500; }
+        #upload-box p { color:#666; font-size:12px; margin-bottom:12px; }
+        #upload-box .hint { color:#444; font-size:10px; }
+        #upload-box .close-upload { margin-top:16px; padding:6px 20px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); background:transparent; color:#888; cursor:pointer; font-size:12px; }
+        #upload-box .close-upload:hover { color:#ddd; }
+
+        /* ── Loading ── */
+        #loading { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#0a0a14; z-index:999; transition:opacity 0.5s; }
+        #loading.hidden { opacity:0; pointer-events:none; }
+        #loading .spinner { width:36px; height:36px; border:3px solid #1a1a2e; border-top-color:#7c3aed; border-radius:50%; animation:spin 0.7s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        #loading .txt { margin-left:14px; color:#555; font-size:14px; }
+        #loading .sub { margin-left:8px; color:#333; font-size:12px; }
+
+        /* ── Error toast ── */
+        #toast { position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:400; padding:10px 20px; border-radius:8px; background:#1a1a2e; border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:13px; display:none; animation:toastIn 0.3s ease; pointer-events:none; white-space:nowrap; }
+        #toast.show { display:block; }
+        @keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(-10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+
+        /* ── Responsive ── */
+        @media (max-width:720px) {
+            #topbar { flex-wrap:wrap; gap:8px; padding:8px 10px; }
+            #search-wrap { max-width:100%; flex:1 1 100%; order:10; }
+            #top-actions { margin-left:0; }
+            #filters .pill { font-size:10px; padding:4px 10px; }
+            #bottombar { padding:6px 12px; gap:12px; flex-wrap:wrap; justify-content:center; bottom:10px; }
+            #bottombar .sep { display:none; }
+            #modal-box { padding:20px; max-height:90vh; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+    <div class="spinner"></div>
+    <span class="txt">Loading knowledge graph</span>
+    <span class="sub" id="load-status">...</span>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Top Bar -->
+<div id="topbar">
+    <div class="brand">🧠 SecondSelf <span>· Knowledge Graph</span></div>
+    <div class="sep"></div>
+
+    <!-- Search -->
+    <div id="search-wrap">
+        <span class="icon">🔍</span>
+        <input id="search-input" type="text" placeholder="Search notes by label, tag, or summary..." />
+    </div>
+
+    <!-- Category Filters -->
+    <div id="filters">
+        <button class="pill active" data-filter="all">All</button>
+        <button class="pill" data-filter="Projects"><span class="dot projects" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7c3aed;vertical-align:middle;margin-right:4px;"></span>Projects <span class="count" id="ct-projects">0</span></button>
+        <button class="pill" data-filter="Areas"><span class="dot areas" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#06b6d4;vertical-align:middle;margin-right:4px;"></span>Areas <span class="count" id="ct-areas">0</span></button>
+        <button class="pill" data-filter="Resources"><span class="dot resources" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;vertical-align:middle;margin-right:4px;"></span>Resources <span class="count" id="ct-resources">0</span></button>
+        <button class="pill" data-filter="Archives"><span class="dot archives" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;vertical-align:middle;margin-right:4px;"></span>Archives <span class="count" id="ct-archives">0</span></button>
+    </div>
+
+    <!-- Actions -->
+    <div id="top-actions">
+        <button id="btn-physics" class="active-toggle" title="Toggle physics simulation">⚡ Physics</button>
+        <button id="btn-upload" title="Upload a custom graph.json file">📂 Load Data</button>
+        <button id="btn-fullscreen" title="Toggle fullscreen">⛶ Fullscreen</button>
+    </div>
+</div>
+
+<!-- Network Canvas -->
+<div id="network"></div>
+
+<!-- Bottom Bar: Legend + Stats -->
+<div id="bottombar">
+    <div class="item"><span class="dot projects"></span> Projects <span id="bc-projects" style="color:rgba(255,255,255,0.3);margin-left:2px;">0</span></div>
+    <div class="item"><span class="dot areas"></span> Areas <span id="bc-areas" style="color:rgba(255,255,255,0.3);margin-left:2px;">0</span></div>
+    <div class="item"><span class="dot resources"></span> Resources <span id="bc-resources" style="color:rgba(255,255,255,0.3);margin-left:2px;">0</span></div>
+    <div class="item"><span class="dot archives"></span> Archives <span id="bc-archives" style="color:rgba(255,255,255,0.3);margin-left:2px;">0</span></div>
+    <div class="sep"></div>
+    <div id="total-stats"><span id="node-count">0</span> notes · <span id="edge-count">0</span> connections</div>
+</div>
+
+<!-- Detail Modal -->
+<div id="modal-overlay" onclick="closeModal(event)">
+    <div id="modal-box" onclick="event.stopPropagation()">
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+        <div id="modal-body"><p style="color:#555">Click any node to see its details</p></div>
+    </div>
+</div>
+
+<!-- Upload Area -->
+<div id="upload-area" onclick="closeUpload(event)">
+    <div id="upload-box" onclick="event.stopPropagation()">
+        <div class="icon">📁</div>
+        <h3>Load Custom Graph Data</h3>
+        <p>Drop a <code>graph.json</code> file here, or click to browse.</p>
+        <input id="file-input" type="file" accept=".json,application/json" style="display:none;" />
+        <div class="hint">Expected format: <code>{"nodes": [...], "edges": [...], "metadata": {...}}</code></div>
+        <p style="margin-top:10px;font-size:11px;color:#555;">— or —</p>
+        <button id="btn-close-upload" class="close-upload">Cancel</button>
+    </div>
+</div>
+
+<script>
+/* ============================================================
+   INLINE GRAPH DATA FALLBACK
+   ============================================================
+   This placeholder gets replaced by build_graph.py with the
+   latest graph.json data, so the graph works even when served
+   as a static file without a server.
+   ============================================================ */
+const INLINE_GRAPH_DATA = {"nodes": [{"id": "38394df0", "label": "A personal knowledge pipeline for organizing notes, links, and files using AI LLM categorization and local vector embeddings.", "para": "Projects", "tags": ["SecondBrain", "PersonalKnowledgeManagement", "AI", "LLM"], "summary": "A personal knowledge pipeline for organizing notes, links, and files using AI LLM categorization and local vector embeddings.", "content_preview": "--- id: 38394df0-539e-4152-8867-1a079fcf9a21 json_file: 20260724_130821_38394df0.json metadata_file: metadata.json original_filename: README.md source: filepath timestamp: '2026-07-24T13:08:21.075013+...", "group": "Projects", "source_url": ""}, {"id": "39b80248", "label": "Learning plan for the SecondSelf project to ensure successful project execution.", "para": "Projects", "tags": ["SecondSelf", "LearningPlan", "ProjectManagement"], "summary": "Learning plan for the SecondSelf project to ensure successful project execution.", "content_preview": "Learning plan for SecondSelf project", "group": "Projects", "source_url": ""}, {"id": "67cf2154", "label": "Testing ID linking output to verify functionality.", "para": "Projects", "tags": ["testing", "id-linking", "output"], "summary": "Testing ID linking output to verify functionality.", "content_preview": "Testing ID linking output", "group": "Projects", "source_url": ""}, {"id": "6cffdeb4", "label": "A test file for personal AI second brain development.", "para": "Projects", "tags": ["AI", "Second Brain", "Personal Development"], "summary": "A test file for personal AI second brain development.", "content_preview": "C:\\Users\\biswa\\Work Space\\PROJECT\\AIML\\Second Self\\Personal AI Second Brain\\test.txt  ## Related Notes - [[e28b00c7]] \u2014 A test file for personal AI second brain development.", "group": "Projects", "source_url": ""}, {"id": "bcca4652", "label": "Building an AI-powered second brain or second self project.", "para": "Projects", "tags": ["AI", "Second Brain", "Project Management"], "summary": "Building an AI-powered second brain or second self project.", "content_preview": "i am building my first AI project which is AI second brain or second self", "group": "Projects", "source_url": ""}, {"id": "d3ade56a", "label": "A test note for Week 1 testing purposes.", "para": "Projects", "tags": ["testing", "week1", "note"], "summary": "A test note for Week 1 testing purposes.", "content_preview": "This is a test note for Week 1 testing", "group": "Projects", "source_url": ""}, {"id": "e26544b1", "label": "Testing and validating a folder structure with Markdown files.", "para": "Projects", "tags": ["folder-structure", "testing", "markdown"], "summary": "Testing and validating a folder structure with Markdown files.", "content_preview": "Testing folder structure with content.md and metadata.json", "group": "Projects", "source_url": ""}, {"id": "e28b00c7", "label": "A test file for personal AI second brain development.", "para": "Projects", "tags": ["AI", "Second Brain", "Personal AI"], "summary": "A test file for personal AI second brain development.", "content_preview": "C:\\Users\\biswa\\Work Space\\PROJECT\\AIML\\Second Self\\Personal AI Second Brain\\test.txt  ## Related Notes - [[6cffdeb4]] \u2014 A test file for personal AI second brain development.", "group": "Projects", "source_url": ""}, {"id": "e486cb56", "label": "Testing individual sidecar json configuration and functionality.", "para": "Projects", "tags": ["json", "testing", "sidecar"], "summary": "Testing individual sidecar json configuration and functionality.", "content_preview": "Testing individual sidecar json", "group": "Projects", "source_url": ""}, {"id": "67077074", "label": "A personal name, likely a reference to the owner of the note.", "para": "Areas", "tags": ["Name", "Identity", "Personal"], "summary": "A personal name, likely a reference to the owner of the note.", "content_preview": "biswajit  ## Related Notes - [[d182ecec]] \u2014 A personal name reference. - [[c0eb54eb]] \u2014 A personal name reference.", "group": "Areas", "source_url": ""}, {"id": "70a9c1bf", "label": "Attending Saksham live classes in Massai on July 25th, 2026.", "para": "Areas", "tags": ["saksham", "live-classes", "massai"], "summary": "Attending Saksham live classes in Massai on July 25th, 2026.", "content_preview": "25th july 2026 i am attending the saksham live classes in massai", "group": "Areas", "source_url": ""}, {"id": "7a801244", "label": "Profile of a B.Tech Computer Science and Engineering student with interests in AI and software development.", "para": "Areas", "tags": ["student", "AI", "software-development"], "summary": "Profile of a B.Tech Computer Science and Engineering student with interests in AI and software development.", "content_preview": "Biswajit Biswal is a B.Tech Computer Science and Engineering (Artificial Intelligence) student who is passionate about AI, software development, and building real-world projects.  ## Related Notes - [...", "group": "Areas", "source_url": ""}, {"id": "893803cd", "label": "Biography of Biswajit Biswal, a B.Tech Computer Science and Engineering student with interests in AI and software development.", "para": "Areas", "tags": ["student", "AI", "software-development"], "summary": "Biography of Biswajit Biswal, a B.Tech Computer Science and Engineering student with interests in AI and software development.", "content_preview": "Biswajit Biswal is a B.Tech Computer Science and Engineering (Artificial Intelligence) student who is passionate about AI, software development, and building real-world projects.  ## Related Notes - [...", "group": "Areas", "source_url": ""}, {"id": "99628874", "label": "A daily timetable outlining Biswajit's schedule for personal development, work, and self-improvement.", "para": "Areas", "tags": ["productivity", "time-management", "self-improvement"], "summary": "A daily timetable outlining Biswajit's schedule for personal development, work, and self-improvement.", "content_preview": "MY \ud83d\udcc5 DAILY TIMETABLE Name - Biswajit  6:00 AM \u2013 Wake up & Freshen Up  6:30 AM \u2013 8:00 AM \ud83c\udfcb\ufe0f Gym  8:00 AM \u2013 9:00 AM \ud83c\udf73 Breakfast & Get Ready  9:00 AM \u2013 11:00 AM \ud83d\udcbb Development (Web Development / AI-ML)  1...", "group": "Areas", "source_url": ""}, {"id": "b82ebb08", "label": "A personal name or identifier.", "para": "Areas", "tags": ["Name", "Identity", "Personal"], "summary": "A personal name or identifier.", "content_preview": "biswajit  ## Related Notes - [[67077074]] \u2014 A personal name, likely a reference to the owner of the note.", "group": "Areas", "source_url": ""}, {"id": "c0eb54eb", "label": "Personal name and identity information.", "para": "Areas", "tags": ["Name", "Identity", "Personal"], "summary": "Personal name and identity information.", "content_preview": "biswajit  ## Related Notes - [[67077074]] \u2014 A personal name, likely a reference to the owner of the note.", "group": "Areas", "source_url": ""}, {"id": "d182ecec", "label": "Personal name and identity information.", "para": "Areas", "tags": ["Name", "Identity", "Personal"], "summary": "Personal name and identity information.", "content_preview": "biswajit  ## Related Notes - [[67077074]] \u2014 A personal name, likely a reference to the owner of the note.", "group": "Areas", "source_url": ""}, {"id": "0ccfe113", "label": "Notes on the SecondSelf architecture for future reference.", "para": "Resources", "tags": ["SecondSelf", "architecture", "notes"], "summary": "Notes on the SecondSelf architecture for future reference.", "content_preview": "My custom note about SecondSelf architecture  ## Related Notes - [[15451a6a]] \u2014 Notes on the SecondSelf architecture for future reference. - [[80366dc9]] \u2014 Notes on the SecondSelf architecture for fut...", "group": "Resources", "source_url": ""}, {"id": "15451a6a", "label": "Notes on the SecondSelf architecture for future reference.", "para": "Resources", "tags": ["SecondSelf", "architecture", "notes"], "summary": "Notes on the SecondSelf architecture for future reference.", "content_preview": "My custom note about SecondSelf architecture  ## Related Notes - [[0ccfe113]] \u2014 Notes on the SecondSelf architecture for future reference. - [[80366dc9]] \u2014 Notes on the SecondSelf architecture for fut...", "group": "Resources", "source_url": ""}, {"id": "23055168", "label": "List of required Python packages for a project.", "para": "Resources", "tags": ["dependencies", "python", "requirements"], "summary": "List of required Python packages for a project.", "content_preview": "--- id: 23055168-b028-4764-ab05-1c072bac01b7 json_file: 20260724_132314_23055168.json metadata_file: metadata.json original_filename: requirements.txt source: filepath timestamp: '2026-07-24T13:23:14....", "group": "Resources", "source_url": ""}, {"id": "23dc9594", "label": "GitHub profile of Biswajit Biswal, a MERN Full Stack Developer with skills in HTML, CSS, JavaScript, Java, and Data Structures & Algorithms.", "para": "Resources", "tags": ["github", "developer", "full-stack"], "summary": "GitHub profile of Biswajit Biswal, a MERN Full Stack Developer with skills in HTML, CSS, JavaScript, Java, and Data Structures & Algorithms.", "content_preview": "biswajitbiswal-in (Biswajit Biswal) \u00b7 GitHub Skip to content You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your s...", "group": "Resources", "source_url": ""}, {"id": "302fd606", "label": "GitHub profile of Biswajit Biswal, a MERN Full Stack Developer with expertise in HTML, CSS, JavaScript, Java, and Data Structures & Algorithms.", "para": "Resources", "tags": ["github", "full-stack-development", "mern-stack", "java"], "summary": "GitHub profile of Biswajit Biswal, a MERN Full Stack Developer with expertise in HTML, CSS, JavaScript, Java, and Data Structures & Algorithms.", "content_preview": "biswajitbiswal-in (Biswajit Biswal) \u00b7 GitHub Skip to content You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your s...", "group": "Resources", "source_url": ""}, {"id": "309c75d6", "label": "Record of Biswajit's academic performance with a CGPA of 8.43.", "para": "Resources", "tags": ["academic performance", "cgpa", "university"], "summary": "Record of Biswajit's academic performance with a CGPA of 8.43.", "content_preview": "biswajit cgpa = 8.43 cgpa", "group": "Resources", "source_url": ""}, {"id": "53d7d7af", "label": "A reference to a person named Rahul.", "para": "Resources", "tags": ["name", "reference", "contact"], "summary": "A reference to a person named Rahul.", "content_preview": "rahul", "group": "Resources", "source_url": ""}, {"id": "5ed4cda9", "label": "Personal profile of Biswajit Biswal, an 18-year-old B.Tech student in Computer Science and Engineering at GIFT Autonomous in Bhubaneswar, Odisha, India.", "para": "Resources", "tags": ["education", "personal-info", "student-profile"], "summary": "Personal profile of Biswajit Biswal, an 18-year-old B.Tech student in Computer Science and Engineering at GIFT Autonomous in Bhubaneswar, Odisha, India.", "content_preview": "Name: Biswajit Biswal  Age: 18  Location: - Country: India - State: Odisha - City: Bhubaneswar  Education: - Degree: B.Tech - Branch: Computer Science and Engineering (Artificial Intelligence) - Colle...", "group": "Resources", "source_url": ""}, {"id": "80366dc9", "label": "Notes on the SecondSelf architecture for future reference.", "para": "Resources", "tags": ["SecondSelf", "architecture", "notes"], "summary": "Notes on the SecondSelf architecture for future reference.", "content_preview": "My custom note about SecondSelf architecture  ## Related Notes - [[0ccfe113]] \u2014 Notes on the SecondSelf architecture for future reference. - [[15451a6a]] \u2014 Notes on the SecondSelf architecture for fut...", "group": "Resources", "source_url": ""}, {"id": "9d746bbb", "label": "LinkedIn profile for Biswajit Biswal.", "para": "Resources", "tags": ["LinkedIn", "Professional Network", "Personal Branding"], "summary": "LinkedIn profile for Biswajit Biswal.", "content_preview": "www.linkedin.com/in/biswajit-biswal-in", "group": "Resources", "source_url": ""}, {"id": "a03775e7", "label": "Note on terminal live testing for development purposes.", "para": "Resources", "tags": ["terminal", "testing", "development"], "summary": "Note on terminal live testing for development purposes.", "content_preview": "Terminal live test note", "group": "Resources", "source_url": ""}, {"id": "c24704ac", "label": "Documentation and resources for using Sentence Transformers, a Python framework for state-of-the-art embedding and reranker models.", "para": "Resources", "tags": ["AI", "Machine Learning", "Sentence Transformers", "Hugging Face"], "summary": "Documentation and resources for using Sentence Transformers, a Python framework for state-of-the-art embedding and reranker models.", "content_preview": "sentence-transformers (Sentence Transformers) AI & ML interests In the following you find models tuned to be used for sentence / text embedding generation. They can be used with the sentence-transform...", "group": "Resources", "source_url": ""}, {"id": "c95dd1fd", "label": "A personal knowledge base document outlining the author's goals, skills, and long-term vision as an AI engineer.", "para": "Resources", "tags": ["Personal Knowledge Base", "AI Engineer", "SecondSelf"], "summary": "A personal knowledge base document outlining the author's goals, skills, and long-term vision as an AI engineer.", "content_preview": "# About Biswajit  ## Personal Information  My name is Biswajit Biswal. I am a Computer Science and Engineering (Artificial Intelligence) student. I am passionate about Artificial Intelligence, Machine...", "group": "Resources", "source_url": ""}, {"id": "d16abcfb", "label": "Notes on the SecondSelf architecture for future reference.", "para": "Resources", "tags": ["SecondSelf", "architecture", "notes"], "summary": "Notes on the SecondSelf architecture for future reference.", "content_preview": "My custom note about SecondSelf architecture  ## Related Notes - [[0ccfe113]] \u2014 Notes on the SecondSelf architecture for future reference. - [[15451a6a]] \u2014 Notes on the SecondSelf architecture for fut...", "group": "Resources", "source_url": ""}, {"id": "d4970f9b", "label": "Testing capture functionality from the terminal.", "para": "Resources", "tags": ["terminal", "capture", "testing"], "summary": "Testing capture functionality from the terminal.", "content_preview": "Testing capture from my terminal", "group": "Resources", "source_url": ""}, {"id": "dc771dde", "label": "Official Python.org website with resources, documentation, and community information.", "para": "Resources", "tags": ["python", "programming", "software-development", "community"], "summary": "Official Python.org website with resources, documentation, and community information.", "content_preview": "Welcome to Python.org Notice: This page displays a fallback because interactive scripts did not run. Possible causes include disabled JavaScript or failure to load scripts or stylesheets. Get Started...", "group": "Resources", "source_url": ""}, {"id": "dcd53b17", "label": "Biographical information about Biswajit's family members.", "para": "Resources", "tags": ["family", "genealogy", "biography"], "summary": "Biographical information about Biswajit's family members.", "content_preview": "Biswajit's father - Rajesh Biswal Mother - Kamini Biswal", "group": "Resources", "source_url": null}, {"id": "f2569b09", "label": "A collection of resources for learning the Python programming language.", "para": "Resources", "tags": ["Python", "Programming", "Learning"], "summary": "A collection of resources for learning the Python programming language.", "content_preview": "Learning Python", "group": "Resources", "source_url": ""}], "edges": [{"source": "6cffdeb4", "target": "e28b00c7", "weight": 1.0, "type": "semantic"}, {"source": "67077074", "target": "b82ebb08", "weight": 0.8, "type": "semantic"}, {"source": "67077074", "target": "d182ecec", "weight": 1.0, "type": "semantic"}, {"source": "67077074", "target": "c0eb54eb", "weight": 1.0, "type": "semantic"}, {"source": "5ed4cda9", "target": "7a801244", "weight": 1.0, "type": "semantic"}, {"source": "7a801244", "target": "893803cd", "weight": 0.8, "type": "semantic"}, {"source": "5ed4cda9", "target": "893803cd", "weight": 1.0, "type": "semantic"}, {"source": "b82ebb08", "target": "c0eb54eb", "weight": 0.8, "type": "semantic"}, {"source": "b82ebb08", "target": "d182ecec", "weight": 0.8, "type": "semantic"}, {"source": "c0eb54eb", "target": "d182ecec", "weight": 0.8, "type": "semantic"}, {"source": "0ccfe113", "target": "80366dc9", "weight": 1.0, "type": "semantic"}, {"source": "0ccfe113", "target": "d16abcfb", "weight": 1.0, "type": "semantic"}, {"source": "0ccfe113", "target": "15451a6a", "weight": 1.0, "type": "semantic"}, {"source": "15451a6a", "target": "80366dc9", "weight": 1.0, "type": "semantic"}, {"source": "15451a6a", "target": "d16abcfb", "weight": 1.0, "type": "semantic"}, {"source": "23dc9594", "target": "302fd606", "weight": 1.0, "type": "semantic"}, {"source": "80366dc9", "target": "d16abcfb", "weight": 1.0, "type": "semantic"}], "metadata": {"generated_at": "2026-07-29T16:59:35.119707+00:00", "node_count": 35, "edge_count": 17, "para_categories": {"Projects": 9, "Areas": 8, "Resources": 20, "Archives": 0}, "model_version": "all-MiniLM-L6-v2"}};
+
+/* ============================================================
+   COLOR SCHEME
+   ============================================================ */
+const COLORS = {
+    Projects:  { bg:'#7c3aed', bd:'#a78bfa', hl:{bg:'#8b5cf6',bd:'#c4b5fd'} },
+    Areas:     { bg:'#06b6d4', bd:'#67e8f9', hl:{bg:'#22d3ee',bd:'#a5f3fc'} },
+    Resources: { bg:'#10b981', bd:'#6ee7b7', hl:{bg:'#34d399',bd:'#a7f3d0'} },
+    Archives:  { bg:'#f59e0b', bd:'#fcd34d', hl:{bg:'#fbbf24',bd:'#fde68a'} },
+};
+const DEF = { bg:'#555', bd:'#888', hl:{bg:'#777',bd:'#aaa'} };
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let network = null;
+let nodesDataSet = null;
+let edgesDataSet = null;
+let currentData = null;       // full graph data (unfiltered)
+let physicsEnabled = true;
+let activeFilter = 'all';
+let searchQuery = '';
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init() {
+    setLoadStatus('Loading graph data...');
+
+    // 1. Load data from best available source
+    let data = await loadGraphData();
+
+    if (!data || !data.nodes || !data.nodes.length) {
+        setLoadStatus('No graph data available.');
+        document.getElementById('loading').classList.add('hidden');
+        showToast('No graph data found. Use "Load Data" to upload a graph.json file.');
+        document.getElementById('stats').textContent = 'No graph data available.';
+        return;
+    }
+
+    currentData = data;
+    setLoadStatus('Rendering graph...');
+    renderGraph(data);
+    updateStats(data);
+    updateFilterCounts(data);
+    bindEvents();
+    document.getElementById('loading').classList.add('hidden');
+    setLoadStatus('Ready');
+}
+
+/* ============================================================
+   DATA LOADING — multi-source strategy
+   ============================================================ */
+async function loadGraphData() {
+    // Strategy 1: Inline constant (injected by build_graph.py)
+    if (INLINE_GRAPH_DATA && INLINE_GRAPH_DATA.nodes && INLINE_GRAPH_DATA.nodes.length > 0) {
+        console.log('[graph] Using inline data (injected by build_graph.py)');
+        setLoadStatus('Using preloaded data');
+        return INLINE_GRAPH_DATA;
+    }
+
+    // Strategy 2: URL parameter ?data=... (custom data URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const dataUrl = urlParams.get('data');
+    if (dataUrl) {
+        try {
+            console.log('[graph] Fetching from URL param:', dataUrl);
+            setLoadStatus('Fetching from URL...');
+            const r = await fetch(dataUrl);
+            if (r.ok) {
+                const d = await r.json();
+                if (d && d.nodes) return d;
+            }
+        } catch(e) {
+            console.warn('[graph] URL data fetch failed:', e);
+        }
+    }
+
+    // Strategy 3: Fetch ../data/graph.json via HTTP
+    try {
+        console.log('[graph] Fetching ../data/graph.json');
+        setLoadStatus('Fetching graph.json...');
+        const r = await fetch('../data/graph.json');
+        if (r.ok) {
+            const d = await r.json();
+            if (d && d.nodes && d.nodes.length > 0) {
+                console.log('[graph] Fetched', d.nodes.length, 'nodes');
+                return d;
+            }
+        }
+    } catch(e) {
+        console.warn('[graph] HTTP fetch failed (expected when opening file:// directly):', e);
+    }
+
+    // Strategy 4: Inline fallback even if empty (show UI to load data)
+    return INLINE_GRAPH_DATA;
+}
+
+/* ============================================================
+   RENDER GRAPH
+   ============================================================ */
+function renderGraph(data) {
+    if (!data || !data.nodes) return;
+
+    const c = document.getElementById('network');
+
+    // Build nodes
+    const nodes = data.nodes.map(n => {
+        const clr = COLORS[n.group] || DEF;
+        return {
+            id: n.id,
+            label: '',
+            title: tooltipHTML(n),
+            group: n.group,
+            color: {
+                background: clr.bg,
+                border: clr.bd,
+                highlight: { background: clr.hl.bg, border: clr.hl.bd },
+                hover: { background: clr.hl.bg, border: clr.hl.bd }
+            },
+            shape: 'dot',
+            size: n.group === 'Projects' ? 26 : (n.group === 'Areas' ? 24 : 22),
+            borderWidth: 2,
+            borderWidthSelected: 3,
+            _data: n,
+        };
+    });
+
+    // Build edges
+    const edges = (data.edges || []).map(e => ({
+        from: e.source, to: e.target,
+        width: Math.max(1, (e.weight||1) * 2.5),
+        color: {
+            color: 'rgba(124,58,237,0.12)',
+            highlight: 'rgba(124,58,237,0.4)',
+            hover: 'rgba(124,58,237,0.25)',
+            inherit: false,
+        },
+        smooth: { type:'continuous', roundness:0.3 },
+        _weight: e.weight || 1,
+    }));
+
+    nodesDataSet = new vis.DataSet(nodes);
+    edgesDataSet = new vis.DataSet(edges);
+
+    const opts = {
+        nodes: {
+            scaling: { min:10, max:30 },
+            font: { size: 0 },
+        },
+        edges: {
+            arrows: { to:false, from:false },
+            color: { inherit: false },
+        },
+        physics: {
+            enabled: true,
+            barnesHut: {
+                gravitationalConstant: -6000,
+                centralGravity: 0.25,
+                springLength: 160,
+                springConstant: 0.035,
+                damping: 0.08,
+                avoidOverlap: 0.15,
+            },
+            stabilization: { iterations: 300, fit: true },
+            solver: 'barnesHut',
+        },
+        interaction: {
+            hover: true,
+            tooltipDelay: 150,
+            navigationButtons: false,
+            keyboard: true,
+            dragView: true,
+            zoomView: true,
+            hoverConnectedEdges: true,
+        },
+        layout: { improvedLayout: true, randomSeed: 42 },
+    };
+
+    network = new vis.Network(c, { nodes: nodesDataSet, edges: edgesDataSet }, opts);
+
+    // ── Click: show detail modal ──
+    network.on('click', function(params) {
+        if (params.nodes.length) {
+            const nd = nodesDataSet.get(params.nodes[0]);
+            if (nd && nd._data) showModal(nd._data);
+        } else {
+            closeModal();
+        }
+    });
+
+    network.on('deselectNode', function() { /* keep modal open */ });
+
+    // ── Resize handler ──
+    const onResize = () => {
+        if (network) network.fit({ animation: { duration: 300, easingFunction: 'easeInOutQuad' } });
+    };
+    window.addEventListener('resize', onResize);
+
+    // Fit after stabilization
+    network.once('stabilizationIterationsDone', () => {
+        network.fit({ animation: { duration: 300, easingFunction: 'easeInOutQuad' } });
+    });
+
+    // Pulse animation on select
+    network.on('selectNode', function(params) {
+        if (params.nodes.length) {
+            const nodeId = params.nodes[0];
+            // Highlight connected edges
+            const connectedEdges = network.getConnectedEdges(nodeId);
+            edgesDataSet.forEach(edge => {
+                const isConnected = connectedEdges.includes(edge.id);
+                edgesDataSet.update({
+                    id: edge.id,
+                    color: isConnected
+                        ? { color:'rgba(124,58,237,0.5)', highlight:'rgba(124,58,237,0.7)', hover:'rgba(124,58,237,0.6)', inherit:false }
+                        : { color:'rgba(124,58,237,0.06)', highlight:'rgba(124,58,237,0.4)', hover:'rgba(124,58,237,0.25)', inherit:false },
+                    width: isConnected ? Math.max(1, (edge._weight||1)*3.5) : Math.max(0.3, (edge._weight||1)*1.2),
+                });
+            });
+        }
+    });
+
+    network.on('deselectNode', function() {
+        edgesDataSet.forEach(edge => {
+            edgesDataSet.update({
+                id: edge.id,
+                color: { color:'rgba(124,58,237,0.12)', highlight:'rgba(124,58,237,0.4)', hover:'rgba(124,58,237,0.25)', inherit:false },
+                width: Math.max(1, (edge._weight||1)*2.5),
+            });
+        });
+    });
+}
+
+/* ============================================================
+   TOOLTIP HTML
+   ============================================================ */
+function tooltipHTML(n) {
+    const pc = (n.group||'').toLowerCase();
+    const tags = (n.tags||[]).map(t=>`<span>${esc(t)}</span>`).join(' ');
+    const pv = (n.content_preview||'').substring(0, 160);
+    const su = n.source_url || '';
+    const srcHtml = su ? `<div class="tt-source" style="font-size:10px;color:#a78bfa;margin-top:4px;">🔗 ${esc(su.substring(0,60))}${su.length>60?'...':''}</div>` : '';
+    return `<div class="tt-title">${esc(n.label)}</div>
+<div class="tt-para ${pc}">${n.group||'?'}</div>
+${n.summary?'<div class="tt-summary">'+esc(n.summary)+'</div>':''}
+${tags?'<div class="tt-tags">'+tags+'</div>':''}
+${srcHtml}
+${pv?'<div class="tt-preview">'+esc(pv)+'...</div>':''}`;
+}
+
+/* ============================================================
+   MODAL — Node Detail
+   ============================================================ */
+function showModal(n) {
+    const pc = (n.group||'').toLowerCase();
+    const tags = (n.tags||[]).map(t=>`<span>${esc(t)}</span>`).join('');
+
+    // Find connected nodes
+    let connectedHTML = '';
+    if (currentData && currentData.edges) {
+        const connectedIds = new Set();
+        currentData.edges.forEach(e => {
+            if (e.source === n.id) connectedIds.add(e.target);
+            if (e.target === n.id) connectedIds.add(e.source);
+        });
+        if (connectedIds.size > 0) {
+            const connectedNodes = currentData.nodes.filter(nd => connectedIds.has(nd.id));
+            connectedHTML = '<div class="field"><label>Connected To</label><div class="connected-list">' +
+                connectedNodes.map(cn => `<a onclick="focusNode('${esc(cn.id)}')">${esc(cn.label || cn.id)}</a>`).join('') +
+                '</div></div>';
+        }
+    }
+
+    document.getElementById('modal-body').innerHTML = `
+        <h2>${esc(n.label || n.id)}</h2>
+        <div class="field"><label>Category</label><div class="val"><span class="para-badge ${pc}">${n.group||'?'}</span></div></div>
+        <div class="field"><label>Note ID</label><div class="val">${esc(n.id)}</div></div>
+        <div class="field"><label>Summary</label><div class="val">${esc(n.summary||'No summary')}</div></div>
+        ${tags?'<div class="field"><label>Tags</label><div class="tags">'+tags+'</div></div>':''}
+        ${connectedHTML}
+        <div class="field"><label>Content Preview</label><div class="preview">${esc(n.content_preview||'')}</div></div>
+    `;
+    document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function focusNode(id) {
+    closeModal();
+    if (network && nodesDataSet) {
+        network.selectNodes([id], false);
+        network.focus(id, { scale: 1.5, animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+    }
+}
+
+/* ============================================================
+   STATS
+   ============================================================ */
+function updateStats(data) {
+    if (!data) return;
+    document.getElementById('node-count').textContent = data.metadata?.node_count || data.nodes.length;
+    document.getElementById('edge-count').textContent = data.metadata?.edge_count || (data.edges?.length||0);
+
+    const cats = data.metadata?.para_categories || {};
+    document.getElementById('bc-projects').textContent = cats.Projects || 0;
+    document.getElementById('bc-areas').textContent = cats.Areas || 0;
+    document.getElementById('bc-resources').textContent = cats.Resources || 0;
+    document.getElementById('bc-archives').textContent = cats.Archives || 0;
+}
+
+function updateFilterCounts(data) {
+    if (!data) return;
+    const cats = data.metadata?.para_categories || {};
+    document.getElementById('ct-projects').textContent = cats.Projects || 0;
+    document.getElementById('ct-areas').textContent = cats.Areas || 0;
+    document.getElementById('ct-resources').textContent = cats.Resources || 0;
+    document.getElementById('ct-archives').textContent = cats.Archives || 0;
+}
+
+/* ============================================================
+   FILTER & SEARCH
+   ============================================================ */
+function applyFilters() {
+    if (!currentData || !network || !nodesDataSet) return;
+
+    let visibleIds = new Set(currentData.nodes.map(n => n.id));
+
+    // Category filter
+    if (activeFilter !== 'all') {
+        visibleIds = new Set(
+            currentData.nodes.filter(n => n.group === activeFilter).map(n => n.id)
+        );
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const matchingIds = new Set();
+        currentData.nodes.forEach(n => {
+            if (!visibleIds.has(n.id)) return;
+            const label = (n.label||'').toLowerCase();
+            const summary = (n.summary||'').toLowerCase();
+            const tags = (n.tags||[]).join(' ').toLowerCase();
+            const id = (n.id||'').toLowerCase();
+            const preview = (n.content_preview||'').toLowerCase();
+            if (label.includes(q) || summary.includes(q) || tags.includes(q) || id.includes(q) || preview.includes(q)) {
+                matchingIds.add(n.id);
+            }
+        });
+        visibleIds = matchingIds;
+    }
+
+    // Update node visibility
+    currentData.nodes.forEach(n => {
+        const isVisible = visibleIds.has(n.id);
+        nodesDataSet.update({ id: n.id, hidden: !isVisible });
+    });
+
+    // Update edge visibility (hide edges where either endpoint is hidden)
+    (currentData.edges||[]).forEach(e => {
+        const isVisible = visibleIds.has(e.source) && visibleIds.has(e.target);
+        edgesDataSet.update({ id: `${e.source}-${e.target}`, hidden: !isVisible });
+    });
+
+    // Fit to visible nodes
+    if (visibleIds.size > 0) {
+        network.fit({ animation: { duration: 300, easingFunction: 'easeInOutQuad' } });
+    }
+}
+
+/* ============================================================
+   LOAD CUSTOM DATA
+   ============================================================ */
+function loadCustomData(data) {
+    if (!data || !data.nodes || !data.nodes.length) {
+        showToast('Invalid graph data. Expected {"nodes": [...], "edges": [...]}');
+        return;
+    }
+
+    // Validate nodes have required fields
+    const missingId = data.nodes.some(n => !n.id);
+    if (missingId) {
+        showToast('Each node must have an "id" field.');
+        return;
+    }
+
+    currentData = data;
+
+    // Destroy previous network
+    if (network) {
+        network.destroy();
+        network = null;
+    }
+
+    renderGraph(data);
+    updateStats(data);
+    updateFilterCounts(data);
+
+    // Reset filters
+    activeFilter = 'all';
+    searchQuery = '';
+    document.getElementById('search-input').value = '';
+    document.querySelectorAll('#filters .pill').forEach(p => p.classList.toggle('active', p.dataset.filter === 'all'));
+
+    const categoryCount = (data.metadata?.para_categories
+        ? Object.keys(data.metadata.para_categories).length
+        : new Set(data.nodes.map(n=>n.group||'')).size);
+    showToast(`Loaded ${data.nodes.length} nodes, ${(data.edges||[]).length} edges across ${categoryCount} categories`);
+}
+
+/* ============================================================
+   EVENTS BINDING
+   ============================================================ */
+function bindEvents() {
+    // Search
+    const searchInput = document.getElementById('search-input');
+    let searchTimer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            searchQuery = this.value;
+            applyFilters();
+        }, 200);
+    });
+
+    // Category filter pills
+    document.querySelectorAll('#filters .pill').forEach(pill => {
+        pill.addEventListener('click', function() {
+            document.querySelectorAll('#filters .pill').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            activeFilter = this.dataset.filter;
+            applyFilters();
+        });
+    });
+
+    // Physics toggle
+    document.getElementById('btn-physics').addEventListener('click', function() {
+        if (!network) return;
+        physicsEnabled = !physicsEnabled;
+        network.setOptions({ physics: { enabled: physicsEnabled } });
+        this.classList.toggle('active-toggle', physicsEnabled);
+        if (physicsEnabled) {
+            network.once('stabilizationIterationsDone', () => {
+                network.fit({ animation: { duration: 300 } });
+            });
+        }
+    });
+
+    // Fullscreen
+    document.getElementById('btn-fullscreen').addEventListener('click', function() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
+    });
+
+    // Upload button
+    document.getElementById('btn-upload').addEventListener('click', function() {
+        document.getElementById('upload-area').classList.add('open');
+    });
+
+    // Upload area: click to browse
+    document.getElementById('upload-box').addEventListener('click', function() {
+        document.getElementById('file-input').click();
+    });
+
+    // File input change
+    document.getElementById('file-input').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const data = JSON.parse(ev.target.result);
+                loadCustomData(data);
+                document.getElementById('upload-area').classList.remove('open');
+            } catch(err) {
+                showToast('Failed to parse JSON: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+        this.value = ''; // reset for re-selection
+    });
+
+    // Upload area: drag & drop
+    const uploadBox = document.getElementById('upload-box');
+    uploadBox.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    uploadBox.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+    uploadBox.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                const data = JSON.parse(ev.target.result);
+                loadCustomData(data);
+                document.getElementById('upload-area').classList.remove('open');
+            } catch(err) {
+                showToast('Failed to parse JSON: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    // Close upload
+    document.getElementById('btn-close-upload').addEventListener('click', function() {
+        document.getElementById('upload-area').classList.remove('open');
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.getElementById('upload-area').classList.remove('open');
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            document.getElementById('search-input').focus();
+        }
+    });
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+function esc(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+let toastTimeout = null;
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function setLoadStatus(msg) {
+    const el = document.getElementById('load-status');
+    if (el) el.textContent = msg;
+}
+
+function closeUpload(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('upload-area').classList.remove('open');
+}
+
+/* ============================================================
+   START
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
+
