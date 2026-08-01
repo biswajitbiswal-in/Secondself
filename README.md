@@ -40,27 +40,37 @@
 ## 📽️ Demo Video
 
 <!-- ═══════════════════════════════════════════════════════════
-     DEMO VIDEO — two options:
-     Option A: YouTube embed (click-to-play thumbnail)
-       Replace YOUR_VIDEO_ID with your actual YouTube video ID
-     Option B: Delete Option A and use Option B for a .gif demo
+     DEMO VIDEO PLACEHOLDER
+     Replace the image below with your actual demo video file.
+
+     Option A — Embed a local video file (GitHub supports .mp4):
+       <video src="docs/assets/demo.mp4" controls width="720"></video>
+
+     Option B — Use an animated GIF:
+       ![SecondSelf Demo](docs/assets/demo.gif)
+
+     Option C — Link to a hosted video (Loom, Google Drive, etc.):
+       Wrap your thumbnail image in an <a href="YOUR_VIDEO_URL">
+
+     To generate the placeholder image locally, just replace the
+     src below with your actual thumbnail or first-frame screenshot.
+     Recommended size: 1280×720px (16:9)
      ═══════════════════════════════════════════════════════════ -->
 
-<!-- Option A: YouTube Thumbnail Link -->
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID">
-    <img
-      src="https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg"
-      alt="SecondSelf Demo Video"
-      width="720"
-      style="border-radius:12px"
-    />
-  </a>
-  <p><em>▶ Click to watch the full demo on YouTube</em></p>
-</div>
 
-<!-- Option B: Animated GIF demo (uncomment and replace path) -->
-<!-- ![SecondSelf Demo](docs/assets/demo.gif) -->
+<!-- 🔽 REPLACE THIS IMAGE WITH YOUR DEMO VIDEO / THUMBNAIL 🔽 -->
+<img
+  src="https://placehold.co/1280x720/0d0d1a/a78bfa?text=🎬+Demo+Video+Coming+Soon%0AReplace+this+with+your+video+or+GIF"
+  alt="SecondSelf Demo Video Placeholder"
+  width="720"
+/>
+<!-- 🔼 REPLACE THIS IMAGE WITH YOUR DEMO VIDEO / THUMBNAIL 🔼 -->
+
+<br/>
+<sub><em>📌 Replace the image above with your actual screen recording, GIF, or video thumbnail</em></sub>
+
+</div>
 
 ---
 
@@ -365,7 +375,7 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
 <br/>
 
-Made with ❤️ by [Your Name](https://github.com/YOUR_USERNAME)
+Made with ❤️ by [Biswajit Biswal](https://github.com/biswajitbiswal-in)
 
 ⭐ **If SecondSelf helps you, consider giving it a star!** ⭐
 
