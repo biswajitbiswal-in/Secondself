@@ -32,3 +32,5 @@ test.txt
 
 # Obsidian editor config
 wiki/.obsidian/
+#md file
+explanation.md
