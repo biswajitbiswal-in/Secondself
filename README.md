@@ -1,353 +1,372 @@
+<div align="center">
 
-# SecondSelf — Personal AI Second Brain
+<!-- ═══════════════════════════════════════════════════════════
+     HERO BANNER — replace with your actual banner image
+     Recommended size: 1200×400px, dark-themed
+     ═══════════════════════════════════════════════════════════ -->
 
-SecondSelf is a personal knowledge pipeline that turns scattered notes, links, and files into a self-organizing, queryable second brain using local vector embeddings and AI LLM categorization.
+![SecondSelf Banner](https://placehold.co/1200x400/0d0d1a/a78bfa?text=SecondSelf+—+Your+Personal+AI+Second+Brain)
 
-## 🚀 Features
+<br/>
 
-- **Raw Capture:** One-command ingestion for text notes, web URLs, and files.
-- **Auto-Classification:** Intelligent PARA categorization (Projects, Areas, Resources, Archives), tagging, and summarizing via Groq (Llama 3).
-- **Auto-Linking:** Local semantic similarity search auto-connects related knowledge.
-- **Interactive Graph:** Visual force-directed graph visualization of note relationships.
-- **RAG Q&A:** Grounded answers synthesized directly from your personal knowledge base.
-- **Streamlit Web App:** Unified UI with ask bar, knowledge graph, capture, and pipeline control.
+<h1>🧠 SecondSelf — Personal AI Second Brain</h1>
+
+<p>
+  <strong>Capture anything. Organize automatically. Ask your own knowledge. Visualize everything.</strong><br/>
+  A self-organizing knowledge system powered by local embeddings + Groq AI.
+</p>
+
+<br/>
+
+<!-- BADGES -->
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/UI-Streamlit-ff4b4b?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Groq](https://img.shields.io/badge/LLM-Groq%20Llama%203.1-f97316?style=flat-square)](https://groq.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-34d399?style=flat-square)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/YOUR_USERNAME/secondself?style=flat-square&color=a78bfa)](https://github.com/YOUR_USERNAME/secondself/stargazers)
+[![Issues](https://img.shields.io/github/issues/YOUR_USERNAME/secondself?style=flat-square)](https://github.com/YOUR_USERNAME/secondself/issues)
+
+<br/>
+
+[🚀 Live Demo](https://your-demo-url.streamlit.app) &nbsp;·&nbsp;
+[📖 Docs](#-documentation) &nbsp;·&nbsp;
+[🐛 Report Bug](https://github.com/YOUR_USERNAME/secondself/issues) &nbsp;·&nbsp;
+[✨ Request Feature](https://github.com/YOUR_USERNAME/secondself/issues)
+
+</div>
 
 ---
 
-## 📁 Repository Structure
+## 📽️ Demo Video
+
+<!-- ═══════════════════════════════════════════════════════════
+     DEMO VIDEO — two options:
+     Option A: YouTube embed (click-to-play thumbnail)
+       Replace YOUR_VIDEO_ID with your actual YouTube video ID
+     Option B: Delete Option A and use Option B for a .gif demo
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- Option A: YouTube Thumbnail Link -->
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID">
+    <img
+      src="https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg"
+      alt="SecondSelf Demo Video"
+      width="720"
+      style="border-radius:12px"
+    />
+  </a>
+  <p><em>▶ Click to watch the full demo on YouTube</em></p>
+</div>
+
+<!-- Option B: Animated GIF demo (uncomment and replace path) -->
+<!-- ![SecondSelf Demo](docs/assets/demo.gif) -->
+
+---
+
+## 📸 Screenshots
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREENSHOTS — replace each src with your actual image paths
+     Recommended: export from your running Streamlit app
+     ═══════════════════════════════════════════════════════════ -->
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="https://placehold.co/600x380/0d0d1a/a78bfa?text=📊+Dashboard+Screenshot" alt="Dashboard" width="100%"/>
+      <br/><sub><b>Dashboard — Notes overview & PARA stats</b></sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="https://placehold.co/600x380/0d0d1a/38bdf8?text=🕸️+Knowledge+Graph" alt="Knowledge Graph" width="100%"/>
+      <br/><sub><b>Knowledge Graph — Interactive visual map</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="https://placehold.co/600x380/0d0d1a/34d399?text=💬+Ask+Your+Brain+(RAG)" alt="Ask Interface" width="100%"/>
+      <br/><sub><b>Ask — Plain-English Q&A with source citations</b></sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="https://placehold.co/600x380/0d0d1a/fbbf24?text=📥+Capture+Interface" alt="Capture Interface" width="100%"/>
+      <br/><sub><b>Capture — Add notes, links, or files</b></sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 🤔 What Is SecondSelf?
+
+**SecondSelf is your personal AI-powered "second brain"** — a self-organizing knowledge system that captures your notes, web links, and files; automatically sorts and connects related ideas; visualizes everything as an interactive knowledge graph; and lets you ask plain-English questions answered from *your own notes*.
+
+> Instead of remembering **where** everything is, let SecondSelf remember it for you.
+
+| 😩 Everyday Problem | ✅ How SecondSelf Solves It |
+|---|---|
+| "I saved that article somewhere… where was it?" | Everything is captured into one searchable system |
+| "My notes are a mess, I never organize them" | AI auto-classifies into PARA folders with tags & summaries |
+| "I can't connect the dots across my notes" | Semantic linking finds and connects related ideas automatically |
+| "It's hard to see how my ideas relate" | An interactive **knowledge graph** visualizes all connections |
+| "I want to ask questions about what I've saved" | **RAG Q&A** gives grounded answers with source citations |
+
+---
+
+## ✨ Key Features
+
+- **📥 Universal Capture** — text notes, web URLs (auto-scraped), local PDFs and files
+- **🗂️ AI Auto-Classification** — Groq/Llama sorts every capture into the PARA system with tags and a one-line summary
+- **🔗 Semantic Auto-Linking** — local sentence-transformers find meaning-similar notes and connect them with `[[wikilinks]]`
+- **🕸️ Interactive Knowledge Graph** — drag, zoom, hover, and click through your entire knowledge base visually
+- **💬 RAG Question Answering** — ask anything in plain English; get answers grounded in your own notes with cited sources
+- **⚡ Smart Pipeline** — classify → link → graph runs idempotently; only processes new or changed captures
+- **🎨 Dark-Themed Web UI** — clean Streamlit interface with sidebar controls and live stats
+- **💾 Zero-Database Setup** — everything lives in plain Markdown + JSON files; fully git-friendly and human-readable
+
+---
+
+## 🧬 How It Works — The Pipeline
+
+```
+  YOU  →  raw/           →    wiki/          →  embeddings  →  graph.json  →  ASK
+  input    📥 Archivist       🗂️ Librarian       🔗 Linker      🗺️ Cartographer  🔮 Oracle
+           Capture +          AI classifies       Semantic        Visual map      RAG Q&A
+           timestamp          PARA + tags         auto-linking    of all notes    with sources
+```
+
+Every piece of knowledge flows through 4 phases:
+
+| Phase | Name | What Happens |
+|---|---|---|
+| 1 | **The Archivist** | Raw capture saved with ID + timestamp |
+| 2 | **The Librarian** | AI classifies into PARA; semantic links computed |
+| 3 | **The Cartographer** | Knowledge graph built from notes + links |
+| 4 | **The Oracle** | RAG Q&A: embed question → retrieve notes → synthesize answer |
+
+---
+
+## 🏗️ Project Structure
 
 ```
 secondself/
-├── raw/                 # Raw capture store (Phase 1)
-├── wiki/                # Organized notes store (Phase 2)
+│
+├── raw/                    # 📥 Inbox — freshly captured content
+│   └── {date}_{id}/
+│       ├── content.md
+│       └── metadata.json
+│
+├── wiki/                   # 🗂️ Library — processed, organized notes
 │   ├── Projects/
 │   ├── Areas/
 │   ├── Resources/
 │   └── Archives/
-├── embeddings/          # Cached embedding vectors (Phase 3)
-├── templates/           # HTML templates for graph visualization (Phase 4)
-├── docs/                # Architecture & implementation documentation
-├── data/                # Graph JSON, indices, persistence
-├── static/              # Static assets (graph.html for vis-network)
-├── lib/                 # Shared libraries (models, storage, LLM, embeddings)
-├── config.py            # Central configuration & paths
-├── capture.py           # CLI & ingestion module
-├── classify.py          # LLM classification module
-├── link.py              # Embedding auto-linking module
-├── build_graph.py       # Graph JSON builder
-├── ask.py               # RAG Q&A engine
-├── app.py               # Streamlit application entry point
-├── pipeline.py          # Orchestration script
-├── search.py            # Keyword search across wiki notes
-├── requirements.txt     # Dependency specifications
-├── .env.example         # Environment variable template
-└── README.md            # Project documentation
+│
+├── data/                   # 💾 Derived data (auto-generated)
+│   ├── embeddings.pkl
+│   ├── graph.json
+│   └── index.json
+│
+├── lib/                    # 🔧 Shared code library
+│   ├── models.py           #     Data structures
+│   ├── storage.py          #     File I/O helpers
+│   ├── llm.py              #     Groq AI wrapper
+│   ├── embeddings.py       #     Semantic similarity engine
+│   └── extract.py          #     Text extraction (web, PDF)
+│
+├── ui/pages/               # 🎨 Streamlit UI pages
+├── static/graph.html       # 🕸️ Interactive graph viewer
+│
+├── capture.py              # Phase 1 — capture anything
+├── classify.py             # Phase 2A — AI classification
+├── link.py                 # Phase 2B — semantic linking
+├── build_graph.py          # Phase 3 — graph builder
+├── ask.py                  # Phase 4 — RAG Q&A engine
+├── pipeline.py             # 🔁 Orchestrator
+├── app.py                  # 🚀 Streamlit entry point
+└── config.py               # ⚙️ Central settings
 ```
 
 ---
 
-## ⚙️ Quick Start Setup
+## 🚀 Getting Started
 
-### 1. Environment & Dependencies
+### Prerequisites
 
-Create and activate a virtual environment, then install dependencies:
+- Python **3.10+**
+- A free [Groq API key](https://console.groq.com) (takes 30 seconds to get)
+
+### 1 — Clone & Install
 
 ```bash
-# Windows
-python -m venv .venv
-.venv\Scripts\activate
+git clone https://github.com/YOUR_USERNAME/secondself.git
+cd secondself
 
-# Install requirements
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
 pip install -r requirements.txt
 ```
 
-### 2. Configure Credentials
-
-Copy `.env.example` to `.env` and set your Groq API key:
+### 2 — Configure Environment
 
 ```bash
-copy .env.example .env
+cp .env.example .env
 ```
 
-Edit `.env`:
+Open `.env` and add your key:
+
 ```env
-GROQ_API_KEY=your_actual_groq_api_key
+GROQ_API_KEY=your_groq_api_key_here
 ```
 
-### 3. Verify Setup
-
-Run the setup verification check:
-
-```bash
-python -c "import config; print('Setup OK')"
-```
-
----
-
-## 📖 Usage Overview
-
-### CLI Commands
-
-```bash
-# Capture a note, link, or file
-python capture.py "My note content"
-python capture.py "https://example.com/article"
-python capture.py ./documents/notes.md
-
-# Classify raw captures into wiki notes
-python classify.py
-
-# Auto-link related notes
-python link.py
-
-# Build the knowledge graph
-python build_graph.py
-
-# Ask questions via CLI
-python ask.py "What are my career goals?"
-python ask.py "What ML resources have I saved?"
-
-# Full pipeline
-python pipeline.py process
-
-# Keyword search
-python search.py "machine learning"
-```
-
-### 🌐 Web Interface (Streamlit App)
-
-The Streamlit app provides a unified UI for all SecondSelf features:
+### 3 — Run the Web App
 
 ```bash
 streamlit run app.py
 ```
 
-#### App Layout
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  🧠 SecondSelf — Personal AI Second Brain                  │
-├────────────────────────────────────────────────────────────┤
-│  Ask Your Brain: [___________________________] [🔍 Ask]    │
-│  + Retrieval options (top-k, threshold)                    │
-│  Answer panel with source citations                        │
-├────────────────────────────────────────────────────────────┤
-│  Knowledge Graph (vis-network) — interactive               │
-│  • Hover for tooltips (summary, tags, preview)             │
-│  • Click for full detail modal                             │
-│  • Filter by PARA category                                 │
-│  • Search by label, tag, or summary                        │
-├────────────────────────────────────────────────────────────┤
-│  Sidebar:                                                  │
-│  ├─ Quick Capture (Note / Link / File)                     │
-│  ├─ Pipeline Control (Process All / Refresh Graph / Steps) │
-│  └─ Stats (Notes, Embeddings, Graph, PARA breakdown)       │
-└────────────────────────────────────────────────────────────┘
-```
-
-#### Sidebar Features
-
-| Feature | Description |
-|---------|-------------|
-| **Quick Capture** | Capture notes, URLs, or uploaded files directly from the UI |
-| **Process All** | Run classify + link + build graph in one click |
-| **Refresh Graph** | Rebuild the knowledge graph from wiki notes |
-| **Individual Steps** | Classify, Link, or Build Graph separately |
-| **Stats Panel** | See note counts, embedding status, graph sizes, PARA breakdown |
-
-#### Main Panel Features
-
-| Feature | Description |
-|---------|-------------|
-| **Ask Bar** | Type questions in plain English, get answers from your notes |
-| **Retrieval Options** | Adjust top-K and relevance threshold |
-| **Answer Display** | Synthesized answer with numbered source citations |
-| **Source Cards** | Each source shows ID, summary, category, relevance score |
-| **Knowledge Graph** | Interactive vis-network with force-directed layout |
-| **Node Details** | Click any node to see full info in a modal |
-
-#### Keyboard Shortcuts (in graph)
-
-| Key | Action |
-|-----|--------|
-| `Ctrl+F` / `Cmd+F` | Focus search input |
-| `Esc` | Close modal / upload panel |
-| Scroll | Zoom in/out on graph |
-| Drag | Pan around graph |
-| Click node | Show detail modal |
+Open **http://localhost:8501** in your browser — you're live! 🎉
 
 ---
 
-## 🔄 Pipeline
+## 🖥️ Usage
 
-The full pipeline can be run in one command:
+### Web App (Recommended)
 
 ```bash
-# Full pipeline: classify → link → build graph
+streamlit run app.py
+```
+
+Everything you need is in the UI:
+
+| Page | What you can do |
+|---|---|
+| **Ask Your Brain** | Type any question, get answers with source cards |
+| **Knowledge Graph** | Explore your ideas visually — drag, zoom, hover, click |
+| **Capture** (sidebar) | Add a note, paste a URL, or upload a file |
+| **Pipeline** (sidebar) | Run "Process All" or individual steps |
+| **Stats** (sidebar) | See total notes, connections, PARA breakdown |
+
+### Command Line
+
+```bash
+# Capture content
+python capture.py "My new idea to remember"
+python capture.py --link "https://example.com/article"
+python capture.py --file ./documents/report.pdf
+
+# Process everything (classify → link → graph)
 python pipeline.py process
 
-# Or step by step:
+# Or run individual steps
 python pipeline.py classify
 python pipeline.py link
 python pipeline.py graph
-python pipeline.py ask "Your question here"
+
+# Ask a question
+python ask.py "What did I save about machine learning?"
+
+# Keyword search
+python search.py "python"
 ```
 
 ---
 
-## 🧠 Architecture Overview
+## 🛠️ Tech Stack
 
-```
-                   ┌──────────────┐
-                   │  capture.py  │
-                   │  (Phase 1)   │
-                   └──────┬───────┘
-                          ▼
-                   ┌──────────────┐
-                   │  raw/        │
-                   │  captures    │
-                   └──────┬───────┘
-                          ▼
-              ┌───────────────────────┐
-              │    classify.py        │
-              │  (Phase 2 — Sub 2.1)  │
-              │  lib/llm.py (Groq)    │
-              └───────────┬───────────┘
-                          ▼
-              ┌───────────────────────┐
-              │    wiki/ notes        │
-              │  (PARA organized)     │
-              └───────────┬───────────┘
-                          ▼
-              ┌───────────────────────┐
-              │    link.py            │
-              │  (Phase 2 — Sub 2.2)  │
-              │  lib/embeddings.py    │
-              └───────────┬───────────┘
-                          ▼
-              ┌───────────────────────┐
-              │  build_graph.py       │
-              │  (Phase 3)            │
-              │  data/graph.json      │
-              │  static/graph.html    │
-              └───────────┬───────────┘
-                          ▼
-              ┌───────────────────────┐
-              │  ask.py + app.py      │
-              │  (Phase 4)            │
-              │  RAG + Streamlit UI   │
-              └───────────────────────┘
-```
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Language** | Python 3.10+ | Core runtime |
+| **Web UI** | Streamlit | Fast, clean web interface |
+| **LLM** | Groq + Llama 3.1 | Classification + Q&A (free tier) |
+| **Embeddings** | sentence-transformers `all-MiniLM-L6-v2` | Local semantic similarity |
+| **Graph Viz** | vis-network (JavaScript) | Interactive force-directed graph |
+| **Web Scraping** | requests + BeautifulSoup | URL content extraction |
+| **PDF Parsing** | pypdf | PDF text extraction |
+| **Storage** | Filesystem — Markdown + JSON | Human-readable, git-friendly |
+| **Config** | python-dotenv | Secure API key management |
+| **Deployment** | Streamlit Community Cloud | Free public hosting |
 
 ---
 
-## 📚 Dependencies
+## 🌐 Deployment
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `streamlit` | >=1.28 | Web application framework |
-| `groq` | >=0.4 | Groq Cloud LLM API |
-| `sentence-transformers` | >=2.2 | Local embedding generation |
-| `numpy` | >=1.24 | Vector operations |
-| `python-frontmatter` | >=1.0 | YAML frontmatter parsing |
-| `requests` | >=2.31 | HTTP client for URL capture |
-| `beautifulsoup4` | >=4.x | HTML text extraction |
-| `pypdf` | >=4.0 | PDF text extraction |
-| `pyyaml` | >=6.0 | YAML serialization |
-| `python-dotenv` | >=1.0 | Environment variable loading |
+### Deploy to Streamlit Community Cloud (Free)
 
----
-
-## 🔧 Configuration
-
-Key settings in `config.py`:
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `SIMILARITY_THRESHOLD` | 0.75 | Auto-link similarity threshold |
-| `TOP_K_RETRIEVAL` | 5 | Number of notes for RAG context |
-| `EMBEDDING_MODEL` | all-MiniLM-L6-v2 | sentence-transformers model |
-| `GROQ_MODEL` | llama-3.1-8b-instant | LLM for classification & synthesis |
-| `MAX_CONTENT_CHARS` | 8000 | Max chars for LLM processing |
-
----
-
-## 📊 Project Status
-
-| Phase | Name | Badge | Status |
-|-------|------|-------|--------|
-| 1 | The Archivist | 🏅 | Complete |
-| 2 | The Librarian | 🏅 | Complete |
-| 3 | The Cartographer | 🏅 | Complete |
-| 4 | The Oracle | 🏅 | Complete |
-
----
-
-## 🚀 Deployment
-
-SecondSelf is designed to be deployed on **Streamlit Community Cloud** for a public demo.
-
-### Live Demo
-
-> 🔗 **[https://secondself-<your-username>.streamlit.app](https://secondself-<your-username>.streamlit.app)**
-
-### Prerequisites
-
-| Requirement | Notes |
-|-------------|-------|
-| **GitHub account** | Streamlit Cloud deploys from a connected repo |
-| **Public repo** | Required for free Community Cloud tier |
-| **Groq API key** | [console.groq.com](https://console.groq.com/) — free tier is sufficient |
-| **Python 3.11+** | Recommended |
-
-### Deploy Steps
-
-1. **Push to GitHub** — ensure the repo is public
-2. **Go to [share.streamlit.io](https://share.streamlit.io)** → Sign in with GitHub
-3. **Click "New app"** → select repo, branch (`main`), main file: `app.py`
-4. **Click "Deploy"** — Streamlit installs deps from `requirements.txt`
-5. **Configure secrets** — In app dashboard → Settings → Secrets, add:
+1. Push your repo to GitHub (make sure `.env` is in `.gitignore`)
+2. Go to [share.streamlit.io](https://share.streamlit.io) → **New app**
+3. Connect your repo and set the main file to `app.py`
+4. In **Advanced settings → Secrets**, add:
    ```toml
-   GROQ_API_KEY = "gsk_your_key_here"
+   GROQ_API_KEY = "your_groq_api_key_here"
    ```
-6. **Wait for build** (~2-5 min for first build with PyTorch/sentence-transformers)
+5. Click **Deploy** — your public URL is live in ~60 seconds ✅
 
-### Deployment Considerations
+---
 
-| Concern | Strategy |
-|---------|----------|
-| **Cold starts** | Embedding model loads on first Ask (~30-60s); accept for demo |
-| **Ephemeral storage** | Captures and pipeline writes reset on container restart |
-| **Public notes** | `wiki/` content is visible to anyone with the URL |
-| **API key** | Set via Streamlit Secrets; never commit `.env` |
-| **Fast first Ask** | Commit `data/embeddings.pkl` for pre-computed vectors |
+## 🗺️ Roadmap
 
-### Files to Commit for Deploy
+- [x] Phase 1 — Universal capture (text, URL, file)
+- [x] Phase 2 — AI auto-classification + semantic linking
+- [x] Phase 3 — Interactive knowledge graph
+- [x] Phase 4 — RAG question answering with citations
+- [x] Streamlit web app with dark theme
+- [ ] Hybrid search (BM25 + semantic)
+- [ ] Browser extension for one-click capture
+- [ ] Multi-user support with authentication
+- [ ] Live graph updates via WebSockets
+- [ ] Obsidian vault sync
+- [ ] Audio notes + image OCR capture
+- [ ] Scheduled auto-processing (inbox watcher)
+- [ ] SQLite full-text search layer
+- [ ] Re-ranking for more accurate retrieval
 
-```
-app.py               # Streamlit entry point
-requirements.txt     # Python dependencies
-lib/                 # Shared code
-static/              # Graph HTML template
-wiki/                # Demo knowledge base
-data/graph.json      # Pre-built graph
-data/index.json      # Pipeline state
-data/embeddings.pkl  # Pre-computed vectors (force-add with -f)
-.streamlit/config.toml  # Streamlit configuration
-runtime.txt          # Python version pin
-```
+---
 
-### Updating
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
 
 ```bash
-python pipeline.py process   # Refresh pipeline
-python build_graph.py        # Rebuild graph
-git add wiki/ data/graph.json data/index.json
-git add -f data/embeddings.pkl
-git commit -m "Refresh demo data"
-git push                    # Auto-redeploys on Streamlit Cloud
+# Fork the repo, then:
+git checkout -b feature/your-amazing-feature
+git commit -m "feat: add amazing feature"
+git push origin feature/your-amazing-feature
+# Open a Pull Request
 ```
 
-See [docs/deployement_plan.md](./docs/deployement_plan.md) for the full deployment checklist and troubleshooting guide.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a PR.
 
 ---
+
+## 📄 License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgements
+
+- [Groq](https://groq.com) — blazing-fast LLM inference API
+- [sentence-transformers](https://www.sbert.net) — local semantic embeddings
+- [Streamlit](https://streamlit.io) — effortless Python web apps
+- [vis-network](https://visjs.github.io/vis-network/) — interactive graph visualization
+- [Tiago Forte](https://www.buildingasecondbrain.com) — the PARA method that inspired the organization system
+
+---
+
+<div align="center">
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER BANNER — optional, replace with your own image
+     ═══════════════════════════════════════════════════════════ -->
+
+![Footer](https://placehold.co/1200x80/0d0d1a/475569?text=Built+with+%F0%9F%A7%A0+and+Python+·+SecondSelf+2025)
+
+<br/>
+
+Made with ❤️ by [Your Name](https://github.com/YOUR_USERNAME)
+
+⭐ **If SecondSelf helps you, consider giving it a star!** ⭐
+
+</div>
