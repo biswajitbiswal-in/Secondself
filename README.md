@@ -84,11 +84,11 @@
 <table>
   <tr>
     <td align="center" width="50%">
-      <img src="https://placehold.co/600x380/0d0d1a/a78bfa?text=📊+Dashboard+Screenshot" alt="Dashboard" width="100%"/>
+      <img src="dashboard.png" alt="Dashboard" width="100%"/>
       <br/><sub><b>Dashboard — Notes overview & PARA stats</b></sub>
     </td>
     <td align="center" width="50%">
-      <img src="https://placehold.co/600x380/0d0d1a/38bdf8?text=🕸️+Knowledge+Graph" alt="Knowledge Graph" width="100%"/>
+      <img src="knowledge_graph.png" alt="Knowledge Graph" width="100%"/>
       <br/><sub><b>Knowledge Graph — Interactive visual map</b></sub>
     </td>
   </tr>
