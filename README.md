@@ -28,7 +28,7 @@
 
 <br/>
 
-[🚀 Live Demo](https://secondself.streamlit.app/) &nbsp;·&nbsp;
+[🚀 Live Demo](https://secondself.streamlit.app) &nbsp;·&nbsp;
 [🐛 Report Bug](https://github.com/biswajitbiswal-in/secondself/issues) &nbsp;·&nbsp;
 [✨ Request Feature](https://github.com/biswajitbiswal-in/secondself/issues)
 
