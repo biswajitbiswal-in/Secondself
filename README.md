@@ -39,7 +39,6 @@
 <!-- 🔼 REPLACE THIS IMAGE WITH YOUR DEMO VIDEO / THUMBNAIL 🔼 -->
 
 <br/>
-<sub><em>📌 Replace the image above with your actual screen recording, GIF, or video thumbnail</em></sub>
 
 </div>
 
