@@ -28,43 +28,14 @@
 
 <br/>
 
-[🚀 Live Demo](https://your-demo-url.streamlit.app) &nbsp;·&nbsp;
-[📖 Docs](#-documentation) &nbsp;·&nbsp;
-[🐛 Report Bug](https://github.com/YOUR_USERNAME/secondself/issues) &nbsp;·&nbsp;
-[✨ Request Feature](https://github.com/YOUR_USERNAME/secondself/issues)
+[🚀 Live Demo](https://secondself.streamlit.app/) &nbsp;·&nbsp;
+[🐛 Report Bug](https://github.com/biswajitbiswal-in/secondself/issues) &nbsp;·&nbsp;
+[✨ Request Feature](https://github.com/biswajitbiswal-in/secondself/issues)
 
 </div>
 
----
 
-## 📽️ Demo Video
 
-<!-- ═══════════════════════════════════════════════════════════
-     DEMO VIDEO PLACEHOLDER
-     Replace the image below with your actual demo video file.
-
-     Option A — Embed a local video file (GitHub supports .mp4):
-       <video src="docs/assets/demo.mp4" controls width="720"></video>
-
-     Option B — Use an animated GIF:
-       ![SecondSelf Demo](docs/assets/demo.gif)
-
-     Option C — Link to a hosted video (Loom, Google Drive, etc.):
-       Wrap your thumbnail image in an <a href="YOUR_VIDEO_URL">
-
-     To generate the placeholder image locally, just replace the
-     src below with your actual thumbnail or first-frame screenshot.
-     Recommended size: 1280×720px (16:9)
-     ═══════════════════════════════════════════════════════════ -->
-
-<div align="center">
-
-<!-- 🔽 REPLACE THIS IMAGE WITH YOUR DEMO VIDEO / THUMBNAIL 🔽 -->
-<img
-  src="https://placehold.co/1280x720/0d0d1a/a78bfa?text=🎬+Demo+Video+Coming+Soon%0AReplace+this+with+your+video+or+GIF"
-  alt="SecondSelf Demo Video Placeholder"
-  width="720"
-/>
 <!-- 🔼 REPLACE THIS IMAGE WITH YOUR DEMO VIDEO / THUMBNAIL 🔼 -->
 
 <br/>
